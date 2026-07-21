@@ -1,0 +1,249 @@
+{
+  "metadata": {
+    "fuente": "Portal de Datos Abiertos del Sector Electricidad del ICE (ArcGIS Hub)",
+    "urls": {
+      "subestaciones": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/Subestaciones/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson",
+      "lineas": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/LineasDeTransmision/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson"
+    },
+    "fecha_descarga": "2026-07-20",
+    "fecha_construccion": "2026-07-21",
+    "esquema_peso": "kv",
+    "region": "valle_central",
+    "modo_seleccion": "conectividad",
+    "max_nodes": 12,
+    "n_nodos": 12,
+    "n_aristas": 15,
+    "ciclos_independientes": 4,
+    "reporte_nacional": {
+      "extremos_no_reconocidos": [
+        "aguas calientes",
+        "cemex",
+        "changuinola",
+        "frontera nicaragua",
+        "progreso"
+      ],
+      "circuitos_ignorados": [
+        "SIEPAC"
+      ],
+      "n_nodos": 75,
+      "n_aristas": 97
+    }
+  },
+  "nodes": [
+    {
+      "id": "el coco",
+      "nombre": "El Coco",
+      "provincia": "Alajuela",
+      "canton": "Alajuela",
+      "x": -84.2254708389885,
+      "y": 9.99809986742623,
+      "frontera": false
+    },
+    {
+      "id": "naranjo",
+      "nombre": "Naranjo",
+      "provincia": "Alajuela",
+      "canton": "Naranjo",
+      "x": -84.371277621695,
+      "y": 10.0873381721484,
+      "frontera": false
+    },
+    {
+      "id": "lindora",
+      "nombre": "Lindora",
+      "provincia": "San Jose",
+      "canton": "Santa Ana",
+      "x": -84.2128942557041,
+      "y": 9.95950795877904,
+      "frontera": false
+    },
+    {
+      "id": "la caja",
+      "nombre": "La Caja",
+      "provincia": "San Jose",
+      "canton": "San Jose",
+      "x": -84.1659977254549,
+      "y": 9.96469179813076,
+      "frontera": false
+    },
+    {
+      "id": "coyol",
+      "nombre": "Coyol",
+      "provincia": "Alajuela",
+      "canton": "Alajuela",
+      "x": -84.2694614295508,
+      "y": 9.99215878267053,
+      "frontera": false
+    },
+    {
+      "id": "ribera",
+      "nombre": "Ribera",
+      "provincia": "Heredia",
+      "canton": "Belen",
+      "x": -84.1695564037503,
+      "y": 9.99092500452512,
+      "frontera": false
+    },
+    {
+      "id": "la garita",
+      "nombre": "La Garita",
+      "provincia": "Alajuela",
+      "canton": "Alajuela",
+      "x": -84.3593273953882,
+      "y": 9.92871152165449,
+      "frontera": false
+    },
+    {
+      "id": "heredia",
+      "nombre": "Heredia",
+      "provincia": "Heredia",
+      "canton": "Heredia",
+      "x": -84.1200188484355,
+      "y": 9.98287954156834,
+      "frontera": false
+    },
+    {
+      "id": "escazu",
+      "nombre": "Escazú",
+      "provincia": "San José",
+      "canton": "Escazú",
+      "x": -84.1615307762048,
+      "y": 9.93550877790663,
+      "frontera": false
+    },
+    {
+      "id": "colima",
+      "nombre": "Colima",
+      "provincia": "San Jose",
+      "canton": "Tibas",
+      "x": -84.0905336958344,
+      "y": 9.95221134899667,
+      "frontera": false
+    },
+    {
+      "id": "alajuelita",
+      "nombre": "Alajuelita",
+      "provincia": "San Jose",
+      "canton": "Alajuelita",
+      "x": -84.1104412741054,
+      "y": 9.91277769892899,
+      "frontera": false
+    },
+    {
+      "id": "belen",
+      "nombre": "Belen",
+      "provincia": "Heredia",
+      "canton": "Belen",
+      "x": -84.1727882631211,
+      "y": 9.99678991218218,
+      "frontera": false
+    }
+  ],
+  "edges": [
+    {
+      "u": "el coco",
+      "v": "la garita",
+      "weight": 138.0,
+      "voltaje": 138,
+      "circuito": "Garita-El Coco"
+    },
+    {
+      "u": "el coco",
+      "v": "la caja",
+      "weight": 138.0,
+      "voltaje": 138,
+      "circuito": "El Coco-La Caja"
+    },
+    {
+      "u": "naranjo",
+      "v": "la garita",
+      "weight": 138.0,
+      "voltaje": 138,
+      "circuito": "Naranjo-La Garita"
+    },
+    {
+      "u": "lindora",
+      "v": "la garita",
+      "weight": 230.0,
+      "voltaje": 230,
+      "circuito": "Garita-Lindora"
+    },
+    {
+      "u": "lindora",
+      "v": "la caja",
+      "weight": 460.0,
+      "voltaje": 230,
+      "circuito": "Lindora-La Caja"
+    },
+    {
+      "u": "la caja",
+      "v": "la garita",
+      "weight": 138.0,
+      "voltaje": 138,
+      "circuito": "Garita-La Caja"
+    },
+    {
+      "u": "la caja",
+      "v": "alajuelita",
+      "weight": 138.0,
+      "voltaje": 138,
+      "circuito": "Alajuelita-La Caja"
+    },
+    {
+      "u": "la caja",
+      "v": "escazu",
+      "weight": 138.0,
+      "voltaje": 138,
+      "circuito": "Escazu-La Caja"
+    },
+    {
+      "u": "la caja",
+      "v": "colima",
+      "weight": 138.0,
+      "voltaje": 138,
+      "circuito": "La Caja-Colima"
+    },
+    {
+      "u": "la caja",
+      "v": "heredia",
+      "weight": 138.0,
+      "voltaje": 138,
+      "circuito": "La Caja-Heredia"
+    },
+    {
+      "u": "la caja",
+      "v": "belen",
+      "weight": 230.0,
+      "voltaje": 230,
+      "circuito": "La Caja-Belen2"
+    },
+    {
+      "u": "la caja",
+      "v": "ribera",
+      "weight": 230.0,
+      "voltaje": 230,
+      "circuito": "La Caja-Ribera"
+    },
+    {
+      "u": "la caja",
+      "v": "coyol",
+      "weight": 230.0,
+      "voltaje": 230,
+      "circuito": "Coyol-La Caja"
+    },
+    {
+      "u": "ribera",
+      "v": "belen",
+      "weight": 230.0,
+      "voltaje": 230,
+      "circuito": "Ribera-Belén"
+    },
+    {
+      "u": "heredia",
+      "v": "colima",
+      "weight": 138.0,
+      "voltaje": 138,
+      "circuito": "Heredia-Colima"
+    }
+  ]
+}

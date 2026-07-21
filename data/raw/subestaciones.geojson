@@ -1,0 +1,1615 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": 1,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.3589556083694,
+          10.7560934802952
+        ]
+      },
+      "properties": {
+        "FID": 1,
+        "OBJECTID": 1,
+        "Subestacio": "Pailas",
+        "Provincia": "Guanacaste",
+        "Canton": "Liberia",
+        "Distrito": "Curubande",
+        "CodDistrit": "50105",
+        "PuntoX": 351364.1094,
+        "PuntoY": 1189696.6503,
+        "Observacio": "PAI"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 2,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.4219564485242,
+          8.94348490946517
+        ]
+      },
+      "properties": {
+        "FID": 2,
+        "OBJECTID": 2,
+        "Subestacio": "Palmar",
+        "Provincia": "Puntarenas",
+        "Canton": "Osa",
+        "Distrito": "Palmar",
+        "CodDistrit": "60502",
+        "PuntoX": 563565.006,
+        "PuntoY": 988950.5848,
+        "Observacio": "PAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 3,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.7149104775674,
+          10.5072195364139
+        ]
+      },
+      "properties": {
+        "FID": 3,
+        "OBJECTID": 3,
+        "Subestacio": "Nuevo Colon",
+        "Provincia": "Guanacaste",
+        "Canton": "Carrillo",
+        "Distrito": "Sandillal",
+        "CodDistrit": "50303",
+        "PuntoX": 312269.6436,
+        "PuntoY": 1162354.3696,
+        "Observacio": "NCO"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 4,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.371277621695,
+          10.0873381721484
+        ]
+      },
+      "properties": {
+        "FID": 4,
+        "OBJECTID": 4,
+        "Subestacio": "Naranjo",
+        "Provincia": "Alajuela",
+        "Canton": "Naranjo",
+        "Distrito": "Naranjo",
+        "CodDistrit": "20601",
+        "PuntoX": 459308.0753,
+        "PuntoY": 1115426.6794,
+        "Observacio": "NAR"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 5,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.1022376096318,
+          9.99447317482164
+        ]
+      },
+      "properties": {
+        "FID": 5,
+        "OBJECTID": 5,
+        "Subestacio": "Moin",
+        "Provincia": "Limón",
+        "Canton": "Limón",
+        "Distrito": "Rio Blanco",
+        "CodDistrit": "70103",
+        "PuntoX": 598425.7277,
+        "PuntoY": 1105266.8363,
+        "Observacio": "MOI"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 6,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.267612029714,
+          10.725715627784
+        ]
+      },
+      "properties": {
+        "FID": 6,
+        "OBJECTID": 6,
+        "Subestacio": "Mogote",
+        "Provincia": "Guanacaste",
+        "Canton": "Bagaces",
+        "Distrito": "Mogote",
+        "CodDistrit": "50403",
+        "PuntoX": 361342.5446,
+        "PuntoY": 1186293.2829,
+        "Observacio": "MOG"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 7,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.44574374991,
+          10.6153551397224
+        ]
+      },
+      "properties": {
+        "FID": 7,
+        "OBJECTID": 7,
+        "Subestacio": "Liberia",
+        "Provincia": "Guanacaste",
+        "Canton": "Liberia",
+        "Distrito": "Liberia",
+        "CodDistrit": "50101",
+        "PuntoX": 341796.9519,
+        "PuntoY": 1174169.5231,
+        "Observacio": "LIB"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 8,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.3593273953882,
+          9.92871152165449
+        ]
+      },
+      "properties": {
+        "FID": 8,
+        "OBJECTID": 8,
+        "Subestacio": "La Garita",
+        "Provincia": "Alajuela",
+        "Canton": "Alajuela",
+        "Distrito": "Turrucares",
+        "CodDistrit": "20111",
+        "PuntoX": 460598.7121,
+        "PuntoY": 1097881.2971,
+        "Observacio": "GAR"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 9,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.755211522264,
+          10.2623925157968
+        ]
+      },
+      "properties": {
+        "FID": 9,
+        "OBJECTID": 9,
+        "Subestacio": "Leesville",
+        "Provincia": "Limón",
+        "Canton": "Pococi",
+        "Distrito": "Roxana",
+        "CodDistrit": "70204",
+        "PuntoX": 526814.037,
+        "PuntoY": 1134774.4302,
+        "Observacio": "LEE"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 10,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.5694118639598,
+          10.2664424906921
+        ]
+      },
+      "properties": {
+        "FID": 10,
+        "OBJECTID": 10,
+        "Subestacio": "Guayabal",
+        "Provincia": "Guanacaste",
+        "Canton": "Santa Cruz",
+        "Distrito": "Santa Cruz",
+        "CodDistrit": "50301",
+        "PuntoX": 328069.6285,
+        "PuntoY": 1135631.8946,
+        "Observacio": "GUA"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 11,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.1659977254549,
+          9.96469179813076
+        ]
+      },
+      "properties": {
+        "FID": 11,
+        "OBJECTID": 11,
+        "Subestacio": "La Caja",
+        "Provincia": "San Jose",
+        "Canton": "San Jose",
+        "Distrito": "Uruca",
+        "CodDistrit": "10107",
+        "PuntoX": 481799.9497,
+        "PuntoY": 1101843.8433,
+        "Observacio": "CAJ"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 12,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.6625335700405,
+          9.96835964493438
+        ]
+      },
+      "properties": {
+        "FID": 12,
+        "OBJECTID": 12,
+        "Subestacio": "Juanilama",
+        "Provincia": "Puntarenas",
+        "Canton": "Esparza",
+        "Distrito": "San Juan Grande",
+        "CodDistrit": "60202",
+        "PuntoX": 427358.9571,
+        "PuntoY": 1102317.6363,
+        "Observacio": "JUA"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 13,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.1200188484355,
+          9.98287954156834
+        ]
+      },
+      "properties": {
+        "FID": 13,
+        "OBJECTID": 13,
+        "Subestacio": "Heredia",
+        "Provincia": "Heredia",
+        "Canton": "Heredia",
+        "Distrito": "San Francisco",
+        "CodDistrit": "40101",
+        "PuntoX": 486841.8284,
+        "PuntoY": 1103853.1715,
+        "Observacio": "HER"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 14,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.7609376943803,
+          10.045579727934
+        ]
+      },
+      "properties": {
+        "FID": 14,
+        "OBJECTID": 14,
+        "Subestacio": "Garabito",
+        "Provincia": "Puntarenas",
+        "Canton": "Montes de Oro",
+        "Distrito": "San Isidro",
+        "CodDistrit": "60403",
+        "PuntoX": 416588.9513,
+        "PuntoY": 1110881.8417,
+        "Observacio": "GAB"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 15,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.4724249855784,
+          10.4173704179929
+        ]
+      },
+      "properties": {
+        "FID": 15,
+        "OBJECTID": 15,
+        "Subestacio": "Filadelfia",
+        "Provincia": "Guanacaste",
+        "Canton": "Carrillo",
+        "Distrito": "Filadelfia",
+        "CodDistrit": "50501",
+        "PuntoX": 338773.9512,
+        "PuntoY": 1152279.2768,
+        "Observacio": "FIL"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 16,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.2254708389885,
+          9.99809986742623
+        ]
+      },
+      "properties": {
+        "FID": 16,
+        "OBJECTID": 16,
+        "Subestacio": "El Coco",
+        "Provincia": "Alajuela",
+        "Canton": "Alajuela",
+        "Distrito": "San Antonio",
+        "CodDistrit": "20104",
+        "PuntoX": 475281.7887,
+        "PuntoY": 1105542.5433,
+        "Observacio": "COC"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 17,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.0548013743086,
+          9.88916450166535
+        ]
+      },
+      "properties": {
+        "FID": 17,
+        "OBJECTID": 17,
+        "Subestacio": "Desamparados",
+        "Provincia": "San Jose",
+        "Canton": "Desamparados",
+        "Distrito": "Gravilias",
+        "CodDistrit": "10312",
+        "PuntoX": 493990.1874,
+        "PuntoY": 1093486.7411,
+        "Observacio": "DES"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 18,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.0778213507225,
+          10.4712932222768
+        ]
+      },
+      "properties": {
+        "FID": 18,
+        "OBJECTID": 18,
+        "Subestacio": "Corobici",
+        "Provincia": "Guanacaste",
+        "Canton": "Cañas",
+        "Distrito": "Cañas",
+        "CodDistrit": "50601",
+        "PuntoX": 382007.8643,
+        "PuntoY": 1158070.1895,
+        "Observacio": "COR"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 19,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.887730559082,
+          9.83860620383819
+        ]
+      },
+      "properties": {
+        "FID": 19,
+        "OBJECTID": 19,
+        "Subestacio": "Concavas",
+        "Provincia": "Cartago",
+        "Canton": "Cartago",
+        "Distrito": "Dulce Nombre",
+        "CodDistrit": "30109",
+        "PuntoX": 512313.9516,
+        "PuntoY": 1087896.7732,
+        "Observacio": "COV"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 20,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.1724692781189,
+          10.2254716021372
+        ]
+      },
+      "properties": {
+        "FID": 20,
+        "OBJECTID": 20,
+        "Subestacio": "Colorado",
+        "Provincia": "Guanacaste",
+        "Canton": "Abangares",
+        "Distrito": "Colorado",
+        "CodDistrit": "50704",
+        "PuntoX": 371545.2111,
+        "PuntoY": 1130914.1779,
+        "Observacio": "COD"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 21,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.4299981406418,
+          10.3524420644017
+        ]
+      },
+      "properties": {
+        "FID": 21,
+        "OBJECTID": 21,
+        "Subestacio": "Ciudad Quesada",
+        "Provincia": "Alajuela",
+        "Canton": "San Carlos",
+        "Distrito": "Quesada",
+        "CodDistrit": "21001",
+        "PuntoX": 452911.2595,
+        "PuntoY": 1144755.3485,
+        "Observacio": "CQU"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 22,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.1966792378551,
+          10.2862851166661
+        ]
+      },
+      "properties": {
+        "FID": 22,
+        "OBJECTID": 22,
+        "Subestacio": "Cariblanco",
+        "Provincia": "Alajuela",
+        "Canton": "Alajuela",
+        "Distrito": "Sarapiqui",
+        "CodDistrit": "20114",
+        "PuntoX": 478457.4707,
+        "PuntoY": 1137413.3148,
+        "Observacio": "CAR"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 23,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.7138447259884,
+          9.9917608454426
+        ]
+      },
+      "properties": {
+        "FID": 23,
+        "OBJECTID": 23,
+        "Subestacio": "Barranca",
+        "Provincia": "Puntarenas",
+        "Canton": "Puntarenas",
+        "Distrito": "Barranca",
+        "CodDistrit": "60108",
+        "PuntoX": 421738.4585,
+        "PuntoY": 1104917.6172,
+        "Observacio": "BAR"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 24,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.0002881841908,
+          10.4727301596314
+        ]
+      },
+      "properties": {
+        "FID": 24,
+        "OBJECTID": 24,
+        "Subestacio": "Arenal",
+        "Provincia": "Guanacaste",
+        "Canton": "Tilaran",
+        "Distrito": "Santa Rosa",
+        "CodDistrit": "50804",
+        "PuntoX": 390496.9849,
+        "PuntoY": 1158201.1567,
+        "Observacio": "ARE"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 25,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.6405866332732,
+          9.91682583413841
+        ]
+      },
+      "properties": {
+        "FID": 25,
+        "OBJECTID": 25,
+        "Subestacio": "Angostura",
+        "Provincia": "Cartago",
+        "Canton": "Turrialba",
+        "Distrito": "Pavones",
+        "CodDistrit": "30506",
+        "PuntoX": 539412.136,
+        "PuntoY": 1096566.771,
+        "Observacio": "ANG"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 26,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.1104412741054,
+          9.91277769892899
+        ]
+      },
+      "properties": {
+        "FID": 26,
+        "OBJECTID": 26,
+        "Subestacio": "Alajuelita",
+        "Provincia": "San Jose",
+        "Canton": "Alajuelita",
+        "Distrito": "San Felipe",
+        "CodDistrit": "11005",
+        "PuntoX": 487889.2778,
+        "PuntoY": 1096099.7832,
+        "Observacio": "ALA"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 27,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.7539381006002,
+          9.87025764992937
+        ]
+      },
+      "properties": {
+        "FID": 27,
+        "OBJECTID": 27,
+        "Subestacio": "Cachi",
+        "Provincia": "Cartago",
+        "Canton": "Jimenez",
+        "Distrito": "Tucurrique",
+        "CodDistrit": "30402",
+        "PuntoX": 526986.083,
+        "PuntoY": 1091405.1602,
+        "Observacio": "CAC"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 28,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.1727882631211,
+          9.99678991218218
+        ]
+      },
+      "properties": {
+        "FID": 28,
+        "OBJECTID": 28,
+        "Subestacio": "Belen",
+        "Provincia": "Heredia",
+        "Canton": "Belen",
+        "Distrito": "La Ribera",
+        "CodDistrit": "40702",
+        "PuntoX": 481057.2861,
+        "PuntoY": 1105394.181,
+        "Observacio": "BEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 29,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.1236323586436,
+          10.4234985773189
+        ]
+      },
+      "properties": {
+        "FID": 29,
+        "OBJECTID": 29,
+        "Subestacio": "Cañas",
+        "Provincia": "Guanacaste",
+        "Canton": "Cañas",
+        "Distrito": "Cañas",
+        "CodDistrit": "50601",
+        "PuntoX": 376973.4083,
+        "PuntoY": 1152800.6727,
+        "Observacio": "CAS"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 30,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -82.8729795563532,
+          9.73197300004779
+        ]
+      },
+      "properties": {
+        "FID": 30,
+        "OBJECTID": 30,
+        "Subestacio": "Cahuita",
+        "Provincia": "Limón",
+        "Canton": "Talamanca",
+        "Distrito": "Cahuita",
+        "CodDistrit": "70403",
+        "PuntoX": 623660.9247,
+        "PuntoY": 1076307.1897,
+        "Observacio": "CAH"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 31,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.5568891493052,
+          10.0827538744123
+        ]
+      },
+      "properties": {
+        "FID": 31,
+        "OBJECTID": 31,
+        "Subestacio": "Reventazon",
+        "Provincia": "Limon",
+        "Canton": "Siquirres",
+        "Distrito": "Siquirres",
+        "CodDistrit": "70301",
+        "PuntoX": 548565.6497,
+        "PuntoY": 1114929.4545,
+        "Observacio": "REV"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 32,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.6230966342929,
+          9.94793779198735
+        ]
+      },
+      "properties": {
+        "FID": 32,
+        "OBJECTID": 32,
+        "Subestacio": "Torito",
+        "Provincia": "Cartago",
+        "Canton": "Turrialba",
+        "Distrito": "Pavones",
+        "CodDistrit": "30506",
+        "PuntoX": 541326.1554,
+        "PuntoY": 1100009.83,
+        "Observacio": "TOT"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 33,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.2501040855814,
+          10.3353104246594
+        ]
+      },
+      "properties": {
+        "FID": 33,
+        "OBJECTID": 33,
+        "Subestacio": "Venecia",
+        "Provincia": "Alajuela",
+        "Canton": "San Carlos",
+        "Distrito": "Venecia",
+        "CodDistrit": "21005",
+        "PuntoX": 472609.9837,
+        "PuntoY": 1142839.5776,
+        "Observacio": "VEN"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 34,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.5266726675119,
+          10.0990345858369
+        ]
+      },
+      "properties": {
+        "FID": 34,
+        "OBJECTID": 34,
+        "Subestacio": "Trapiche",
+        "Provincia": "Limón",
+        "Canton": "Siquirres",
+        "Distrito": "Siquirres",
+        "CodDistrit": "70301",
+        "PuntoX": 551874.8864,
+        "PuntoY": 1116734.7525,
+        "Observacio": "TRA"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 35,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.1932537699486,
+          10.701481507002
+        ]
+      },
+      "properties": {
+        "FID": 35,
+        "OBJECTID": 35,
+        "Subestacio": "Miravalles",
+        "Provincia": "Guanacaste",
+        "Canton": "Bagaces",
+        "Distrito": "Fortuna",
+        "CodDistrit": "50402",
+        "PuntoX": 369466.9616,
+        "PuntoY": 1183579.8883,
+        "Observacio": "MIR"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 36,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.996566045105,
+          9.91027340851822
+        ]
+      },
+      "properties": {
+        "FID": 36,
+        "OBJECTID": 36,
+        "Subestacio": "El Este",
+        "Provincia": "Cartago",
+        "Canton": "La Union",
+        "Distrito": "San Juan",
+        "CodDistrit": "30303",
+        "PuntoX": 500376.5618,
+        "PuntoY": 1095820.811,
+        "Observacio": "EST"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 37,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.2128942557041,
+          9.95950795877904
+        ]
+      },
+      "properties": {
+        "FID": 37,
+        "OBJECTID": 37,
+        "Subestacio": "Lindora",
+        "Provincia": "San Jose",
+        "Canton": "Santa Ana",
+        "Distrito": "Pozos",
+        "CodDistrit": "10903",
+        "PuntoX": 476657.8088,
+        "PuntoY": 1101273.4672,
+        "Observacio": "LIN"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 38,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.0905336958344,
+          9.95221134899667
+        ]
+      },
+      "properties": {
+        "FID": 38,
+        "OBJECTID": 38,
+        "Subestacio": "Colima",
+        "Provincia": "San Jose",
+        "Canton": "Tibas",
+        "Distrito": "Colima",
+        "CodDistrit": "11305",
+        "PuntoX": 490073.4851,
+        "PuntoY": 1100460.3434,
+        "Observacio": "COL"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 39,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.1258452871889,
+          9.70702587144946
+        ]
+      },
+      "properties": {
+        "FID": 39,
+        "OBJECTID": 39,
+        "Subestacio": "Cobano",
+        "Provincia": "Puntarenas",
+        "Canton": "Puntarenas",
+        "Distrito": "Cobano",
+        "CodDistrit": "60111",
+        "PuntoX": 376458.8781,
+        "PuntoY": 1073547.2309,
+        "Observacio": "COB"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 40,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.9962764371341,
+          10.4819843791374
+        ]
+      },
+      "properties": {
+        "FID": 40,
+        "OBJECTID": 40,
+        "Subestacio": "Tanque",
+        "Provincia": "Guanacaste",
+        "Canton": "Tilaran",
+        "Distrito": "Santa Rosa",
+        "CodDistrit": "50801",
+        "PuntoX": 390939.4356,
+        "PuntoY": 1159223.4272,
+        "Observacio": "TAN"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 41,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.1186177079289,
+          9.93205256369277
+        ]
+      },
+      "properties": {
+        "FID": 41,
+        "OBJECTID": 41,
+        "Subestacio": "Anonos",
+        "Provincia": "San Jose",
+        "Canton": "San Jose",
+        "Distrito": "Mata Redonda",
+        "CodDistrit": "10108",
+        "PuntoX": 486993.4292,
+        "PuntoY": 1098231.8227,
+        "Observacio": "ANN"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 42,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.6730678811495,
+          9.89579602695646
+        ]
+      },
+      "properties": {
+        "FID": 42,
+        "OBJECTID": 42,
+        "Subestacio": "Turrialba",
+        "Provincia": "Cartago",
+        "Canton": "Turrialba",
+        "Distrito": "Turrialba",
+        "CodDistrit": "30501",
+        "PuntoX": 535852.5896,
+        "PuntoY": 1094237.2467,
+        "Observacio": "TUR"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 43,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.2579376913874,
+          10.2750223494126
+        ]
+      },
+      "properties": {
+        "FID": 43,
+        "OBJECTID": 43,
+        "Subestacio": "Toro",
+        "Provincia": "Alajuela",
+        "Canton": "Grecia",
+        "Distrito": "Rio Cuarto",
+        "CodDistrit": "20306",
+        "PuntoX": 471746.7152,
+        "PuntoY": 1136172.4101,
+        "Observacio": "TOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 44,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.0553668404591,
+          9.98023935836378
+        ]
+      },
+      "properties": {
+        "FID": 44,
+        "OBJECTID": 44,
+        "Subestacio": "San Miguel",
+        "Provincia": "Heredia",
+        "Canton": "Santo Domingo",
+        "Distrito": "San Miguel",
+        "CodDistrit": "40303",
+        "PuntoX": 493929.8546,
+        "PuntoY": 1103559.2955,
+        "Observacio": "SMI"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 45,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.6805316230186,
+          9.3617220335632
+        ]
+      },
+      "properties": {
+        "FID": 45,
+        "OBJECTID": 45,
+        "Subestacio": "San Isidro",
+        "Provincia": "San Jose",
+        "Canton": "Perez Zeledon",
+        "Distrito": "Daniel Flores",
+        "CodDistrit": "11903",
+        "PuntoX": 535089.167,
+        "PuntoY": 1035170.0442,
+        "Observacio": "SIS"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 46,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.2659936223352,
+          10.0316537985192
+        ]
+      },
+      "properties": {
+        "FID": 46,
+        "OBJECTID": 46,
+        "Subestacio": "Santa Rita",
+        "Provincia": "Guanacaste",
+        "Canton": "Nandayure",
+        "Distrito": "Santa Rita",
+        "CodDistrit": "50902",
+        "PuntoX": 361213.9182,
+        "PuntoY": 1109512.1768,
+        "Observacio": "SRI"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 47,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.103277557602,
+          10.4652780043708
+        ]
+      },
+      "properties": {
+        "FID": 47,
+        "OBJECTID": 47,
+        "Subestacio": "Sandillal",
+        "Provincia": "Guanacaste",
+        "Canton": "Cañas",
+        "Distrito": "Cañas",
+        "CodDistrit": "50601",
+        "PuntoX": 379218.4533,
+        "PuntoY": 1157414.4335,
+        "Observacio": "SAD"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 48,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.9892432433061,
+          10.5241607282092
+        ]
+      },
+      "properties": {
+        "FID": 48,
+        "OBJECTID": 48,
+        "Subestacio": "Tejona",
+        "Provincia": "Guanacaste",
+        "Canton": "Tilaran",
+        "Distrito": "Santa Rosa",
+        "CodDistrit": "50801",
+        "PuntoX": 391724.1035,
+        "PuntoY": 1163886.3626,
+        "Observacio": "TEJ"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 49,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.9518222044129,
+          9.82377515025453
+        ]
+      },
+      "properties": {
+        "FID": 49,
+        "OBJECTID": 49,
+        "Subestacio": "Tejar",
+        "Provincia": "Cartago",
+        "Canton": "El Guarco",
+        "Distrito": "San Isidro",
+        "CodDistrit": "30802",
+        "PuntoX": 505284.4762,
+        "PuntoY": 1086254.8416,
+        "Observacio": "TER"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 50,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.1173057068872,
+          9.82991054354878
+        ]
+      },
+      "properties": {
+        "FID": 50,
+        "OBJECTID": 50,
+        "Subestacio": "Tarbaca",
+        "Provincia": "San Jose",
+        "Canton": "Aserri",
+        "Distrito": "Tarbaca",
+        "CodDistrit": "10602",
+        "PuntoX": 487133.323,
+        "PuntoY": 1086935.2585,
+        "Observacio": "TAR"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 51,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.0425995596387,
+          9.94756127006027
+        ]
+      },
+      "properties": {
+        "FID": 51,
+        "OBJECTID": 52,
+        "Subestacio": "Sabanilla",
+        "Provincia": "San Jose",
+        "Canton": "Montes de Oca",
+        "Distrito": "Mercedes",
+        "CodDistrit": "11503",
+        "PuntoX": 495329.1312,
+        "PuntoY": 1099945.0061,
+        "Observacio": "SAB"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 52,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.8418044248856,
+          9.77610097534489
+        ]
+      },
+      "properties": {
+        "FID": 52,
+        "OBJECTID": 53,
+        "Subestacio": "Rio Macho",
+        "Provincia": "Cartago",
+        "Canton": "Paraiso",
+        "Distrito": "Orosi",
+        "CodDistrit": "30203",
+        "PuntoX": 517354.4894,
+        "PuntoY": 1080985.9866,
+        "Observacio": "RMA"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 53,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.0694790592335,
+          8.68527750128086
+        ]
+      },
+      "properties": {
+        "FID": 53,
+        "OBJECTID": 54,
+        "Subestacio": "Rio Claro",
+        "Provincia": "Puntarenas",
+        "Canton": "Golfito",
+        "Distrito": "Guaycara",
+        "CodDistrit": "60703",
+        "PuntoX": 602399.1791,
+        "PuntoY": 960471.3335,
+        "Observacio": "RCL"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 54,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.2841341009743,
+          10.0258748840407
+        ]
+      },
+      "properties": {
+        "FID": 54,
+        "OBJECTID": 55,
+        "Subestacio": "Poas",
+        "Provincia": "Alajuela",
+        "Canton": "Poas",
+        "Distrito": "Carrillos",
+        "CodDistrit": "20804",
+        "PuntoX": 468853.1798,
+        "PuntoY": 1108619.3721,
+        "Observacio": "POA"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 55,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.198199860268,
+          9.63171868258835
+        ]
+      },
+      "properties": {
+        "FID": 55,
+        "OBJECTID": 56,
+        "Subestacio": "Pirris",
+        "Provincia": "San José",
+        "Canton": "Aserri",
+        "Distrito": "Legua",
+        "CodDistrit": "10605",
+        "PuntoX": 478247.605,
+        "PuntoY": 1065020.2871,
+        "Observacio": "PIR"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 56,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.5751972622274,
+          10.3912424737593
+        ]
+      },
+      "properties": {
+        "FID": 56,
+        "OBJECTID": 57,
+        "Subestacio": "Peñas Blancas",
+        "Provincia": "Alajuela",
+        "Canton": "San Ramon",
+        "Distrito": "Peñas Blancas",
+        "CodDistrit": "20213",
+        "PuntoX": 437017.941,
+        "PuntoY": 1149071.9132,
+        "Observacio": "PBL"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 57,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.2283574696009,
+          9.5548421128282
+        ]
+      },
+      "properties": {
+        "FID": 57,
+        "OBJECTID": 58,
+        "Subestacio": "Parrita",
+        "Provincia": "Puntarenas",
+        "Canton": "Parrita",
+        "Distrito": "Parrita",
+        "CodDistrit": "60901",
+        "PuntoX": 474932.1506,
+        "PuntoY": 1056520.1923,
+        "Observacio": "PAR"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 58,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -85.6055963931614,
+          10.6637018567001
+        ]
+      },
+      "properties": {
+        "FID": 58,
+        "OBJECTID": 59,
+        "Subestacio": "Papagayo",
+        "Provincia": "Guanacaste",
+        "Canton": "Liberia",
+        "Distrito": "Nacascolo",
+        "CodDistrit": "50104",
+        "PuntoX": 324328.3952,
+        "PuntoY": 1179604.5366,
+        "Observacio": "PAP"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 59,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.5325502185204,
+          9.59457877512522
+        ]
+      },
+      "properties": {
+        "FID": 59,
+        "OBJECTID": 60,
+        "Subestacio": "Jacó",
+        "Provincia": "San Jose",
+        "Canton": "Turrubares",
+        "Distrito": "Carara",
+        "CodDistrit": "11605",
+        "PuntoX": 441545.6551,
+        "PuntoY": 1060951.8142,
+        "Observacio": "JAC"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 60,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.2694614295508,
+          9.99215878267053
+        ]
+      },
+      "properties": {
+        "FID": 60,
+        "OBJECTID": 61,
+        "Subestacio": "Coyol",
+        "Provincia": "Alajuela",
+        "Canton": "Alajuela",
+        "Distrito": " San José",
+        "CodDistrit": "20202",
+        "PuntoX": 470458.5636,
+        "PuntoY": 1104889.0886,
+        "Observacio": "COY"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 61,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.5209892602467,
+          10.2555113327424
+        ]
+      },
+      "properties": {
+        "FID": 61,
+        "OBJECTID": 62,
+        "Subestacio": "Balsa",
+        "Provincia": "Alajuela",
+        "Canton": "San Ramón",
+        "Distrito": "Angeles",
+        "CodDistrit": "20208",
+        "PuntoX": 442929.2237,
+        "PuntoY": 1134049.3741,
+        "Observacio": "BAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 62,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.1615307762048,
+          9.93550877790663
+        ]
+      },
+      "properties": {
+        "FID": 62,
+        "OBJECTID": 63,
+        "Subestacio": "Escazú",
+        "Provincia": "San José",
+        "Canton": "Escazú",
+        "Distrito": "San Rafael",
+        "CodDistrit": "10203",
+        "PuntoX": 482288.1366,
+        "PuntoY": 1098616.0527,
+        "Observacio": "ESC"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 63,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.0160172345404,
+          9.99286717976289
+        ]
+      },
+      "properties": {
+        "FID": 63,
+        "OBJECTID": 64,
+        "Subestacio": "Coronado",
+        "Provincia": "San José",
+        "Canton": "Vazquez de Coronado",
+        "Distrito": "Dulce Nombre",
+        "CodDistrit": "11103",
+        "PuntoX": 498244.0179,
+        "PuntoY": 1104955.4241,
+        "Observacio": "CON"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 64,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.9156207511754,
+          10.2143225105608
+        ]
+      },
+      "properties": {
+        "FID": 64,
+        "OBJECTID": 863,
+        "Subestacio": "General",
+        "Provincia": "Heredia",
+        "Canton": "Sarapiquí",
+        "Distrito": "Horquetas",
+        "CodDistrit": "41003",
+        "PuntoX": 509244.2392,
+        "PuntoY": 1129448.9715,
+        "Observacio": "GEN"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 65,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -83.1001911396817,
+          10.0124002374984
+        ]
+      },
+      "properties": {
+        "FID": 65,
+        "OBJECTID": 864,
+        "Subestacio": "Río Blanco",
+        "Provincia": "Limón",
+        "Canton": "Limón",
+        "Distrito": "Río Blanco",
+        "CodDistrit": "70102",
+        "PuntoX": 598644.699,
+        "PuntoY": 1107250.353,
+        "Observacio": "RBL"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 66,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.0582552164994,
+          9.95103618003399
+        ]
+      },
+      "properties": {
+        "FID": 66,
+        "OBJECTID": 865,
+        "Subestacio": "Guadalupe",
+        "Provincia": "San José",
+        "Canton": "Goicoechea",
+        "Distrito": "Calle Blancos",
+        "CodDistrit": "10803",
+        "PuntoX": 493612.619,
+        "PuntoY": 1100329.5797,
+        "Observacio": "GUD"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 67,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.0918646483895,
+          9.94805806288704
+        ]
+      },
+      "properties": {
+        "FID": 67,
+        "OBJECTID": 866,
+        "Subestacio": "Uruca",
+        "Provincia": "San José",
+        "Canton": "San José",
+        "Distrito": "Uruca",
+        "CodDistrit": "10107",
+        "PuntoX": 489927.4262,
+        "PuntoY": 1100001.0446,
+        "Observacio": "URU"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 68,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.0854727063055,
+          9.92868368842007
+        ]
+      },
+      "properties": {
+        "FID": 68,
+        "OBJECTID": 867,
+        "Subestacio": "Los Ángeles",
+        "Provincia": "San José",
+        "Canton": "San José",
+        "Distrito": "Hospital",
+        "CodDistrit": "10103",
+        "PuntoX": 490627.7247,
+        "PuntoY": 1097858.1209,
+        "Observacio": "LAN"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 69,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.0675463999821,
+          9.86718723069944
+        ]
+      },
+      "properties": {
+        "FID": 69,
+        "OBJECTID": 869,
+        "Subestacio": "Higuito",
+        "Provincia": "San José",
+        "Canton": "Desamparados",
+        "Distrito": "San Rafael Arriba",
+        "CodDistrit": "10304",
+        "PuntoX": 492592.0074,
+        "PuntoY": 1091056.3997,
+        "Observacio": "HIG"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 70,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.1695564037503,
+          9.99092500452512
+        ]
+      },
+      "properties": {
+        "FID": 70,
+        "OBJECTID": 0,
+        "Subestacio": "Ribera",
+        "Provincia": "Heredia",
+        "Canton": "Belen",
+        "Distrito": "Ribera",
+        "CodDistrit": "40702",
+        "PuntoX": 481411.26152258,
+        "PuntoY": 1104745.35534412,
+        "Observacio": "RIB"
+      }
+    }
+  ]
+}

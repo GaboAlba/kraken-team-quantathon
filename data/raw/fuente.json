@@ -1,0 +1,8 @@
+{
+  "fuente": "Portal de Datos Abiertos del Sector Electricidad del ICE (ArcGIS Hub)",
+  "urls": {
+    "subestaciones": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/Subestaciones/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson",
+    "lineas": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/LineasDeTransmision/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson"
+  },
+  "fecha_descarga": "2026-07-20"
+}

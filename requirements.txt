@@ -1,0 +1,9 @@
+# Quantum computing
+pytket
+guppylang
+
+# Scientific computing / optimization
+scipy
+optax
+cvxpy
+networkx

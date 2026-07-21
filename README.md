@@ -3,6 +3,7 @@
 ## Team Members
 
 * Gabriel Alba Romero
+* Juan C Lara
 
 ## Challenge
 We are solving Challenge #1

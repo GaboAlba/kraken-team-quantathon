@@ -1,16 +1,11 @@
 """Visualization of the electrical grid graph.
 
-Generates four figures from the ICE snapshot:
+Generates two figures from the ICE snapshot:
 
   1. The full national grid, with substations placed at their real geographic
      coordinates (lon/lat) and lines colored by voltage level. The Valle
      Central cluster used as the default subgrid is highlighted.
   2. The Valle Central subgrid alone, with node labels and edge weights.
-  3. The national grid overlaid with the generation plants layer
-     (``Plantas_NGICE``), colored by technology and sized by MW, with
-     connectors from each plant to its matched substation node.
-  4. A per-technology summary of how much generation the graph captures
-     (matched vs. unmatched MW and plant counts).
 
 Usage:
     python -m src.visualize
@@ -33,15 +28,6 @@ FIG_DIR = ROOT / "figures"
 # Colors by voltage level (kV).
 VOLT_COLOR = {230: "#d62728", 138: "#1f77b4"}
 VOLT_LABEL = {230: "230 kV", 138: "138 kV"}
-
-# Colors by generation technology (ICE ``Tecnologia`` values).
-TECH_COLOR = {
-    "Hidroeléctrico": "#1f77b4",
-    "Geotérmico": "#d62728",
-    "Eólico": "#2ca02c",
-    "Solar": "#ff7f0e",
-    "Térmico": "#8c564b",
-}
 
 
 def _edge_color(voltage) -> str:
@@ -141,138 +127,17 @@ def plot_subgraph(sub: nx.Graph, out: Path) -> Path:
     return out
 
 
-def plot_plants_overlay(G: nx.Graph, plants_geojson: dict, report: dict,
-                        out: Path) -> Path:
-    """Overlay the generation plants on the national grid.
-
-    Matched plants are connected to their substation node with a dashed line;
-    unmatched ones are drawn with an ``x``. Marker area scales with MW.
-    """
-    pos = _positions(G)
-    matched_nodes = {m["plant"]: m["node"] for m in report["matched"]}
-
-    fig, ax = plt.subplots(figsize=(11, 13))
-
-    # Grid as light-gray background so the technology colors stand out.
-    for u, v, _ in G.edges(data=True):
-        if u in pos and v in pos:
-            ax.plot([pos[u][0], pos[v][0]], [pos[u][1], pos[v][1]],
-                    color="#bbbbbb", lw=1.0, alpha=0.8, zorder=1)
-    ax.scatter([xy[0] for xy in pos.values()], [xy[1] for xy in pos.values()],
-               s=25, c="#555555", zorder=2, label="Substation")
-
-    seen_techs = set()
-    for feat in plants_geojson.get("features", []):
-        props = feat.get("properties", {})
-        geom = feat.get("geometry") or {}
-        coords = geom.get("coordinates")
-        plant, tech = props.get("Planta"), props.get("Tecnologia")
-        if not plant or not coords:
-            continue
-        mw = props.get("PotenciaEfectivaMW") or 0.0
-        color = TECH_COLOR.get(tech, "#7f7f7f")
-        seen_techs.add(tech)
-
-        node = matched_nodes.get(plant)
-        if node is not None and node in pos:
-            ax.plot([coords[0], pos[node][0]], [coords[1], pos[node][1]],
-                    color=color, lw=1.0, ls="--", alpha=0.9, zorder=3)
-            marker = "o"
-        else:
-            marker = "x"
-        ax.scatter([coords[0]], [coords[1]], s=25 + 1.2 * mw, c=color,
-                   marker=marker, alpha=0.85, edgecolors="black" if marker == "o" else None,
-                   linewidths=0.5, zorder=4)
-
-    # Legend via proxies so every technology shows a uniform round marker.
-    for tech in sorted(seen_techs):
-        ax.scatter([], [], s=60, c=TECH_COLOR.get(tech, "#7f7f7f"),
-                   edgecolors="black", linewidths=0.5, label=tech)
-
-    n_matched = len(report["matched"])
-    n_total = n_matched + len(report["unmatched"])
-    ax.set_title("Generation plants over the transmission grid (ICE)\n"
-                 f"{n_matched}/{n_total} plants matched to a substation node · "
-                 "marker area = MW · x = unmatched",
-                 fontsize=13)
-    ax.set_xlabel("Longitude"); ax.set_ylabel("Latitude")
-    ax.legend(loc="lower right", framealpha=0.9)
-    ax.set_aspect("equal", adjustable="datalim")
-    ax.grid(True, ls=":", alpha=0.3)
-    fig.tight_layout()
-
-    out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out, dpi=150)
-    plt.close(fig)
-    return out
-
-
-def plot_plants_coverage(report: dict, out: Path) -> Path:
-    """Bar chart: matched vs. unmatched generation (MW) per technology."""
-    techs = sorted({p["technology"] for p in report["matched"] + report["unmatched"]})
-    matched_mw = {t: sum(p["mw"] for p in report["matched"] if p["technology"] == t)
-                  for t in techs}
-    unmatched_mw = {t: sum(p["mw"] for p in report["unmatched"] if p["technology"] == t)
-                    for t in techs}
-
-    fig, ax = plt.subplots(figsize=(9, 6))
-    x = range(len(techs))
-    ax.bar(x, [matched_mw[t] for t in techs], width=0.6,
-           color=[TECH_COLOR.get(t, "#7f7f7f") for t in techs])
-    ax.bar(x, [unmatched_mw[t] for t in techs], width=0.6,
-           bottom=[matched_mw[t] for t in techs],
-           color=[TECH_COLOR.get(t, "#7f7f7f") for t in techs],
-           alpha=0.35, hatch="//")
-
-    # Neutral legend proxies (the bars themselves are colored per technology).
-    from matplotlib.patches import Patch
-    ax.legend(handles=[
-        Patch(facecolor="#666666", label="Matched to a graph node"),
-        Patch(facecolor="#666666", alpha=0.35, hatch="//", label="Unmatched"),
-    ], framealpha=0.9)
-    for i, t in enumerate(techs):
-        total = matched_mw[t] + unmatched_mw[t]
-        pct = 100.0 * matched_mw[t] / total if total else 0.0
-        ax.text(i, total, f"{pct:.0f}%", ha="center", va="bottom", fontsize=9)
-
-    ax.set_xticks(list(x))
-    ax.set_xticklabels(techs, rotation=15)
-    ax.set_ylabel("Effective power (MW)")
-    ax.set_title("How much ICE generation the grid graph captures\n"
-                 "solid = plant matched to a substation node · hatched = unmatched",
-                 fontsize=12)
-    ax.grid(True, axis="y", ls=":", alpha=0.3)
-    fig.tight_layout()
-
-    out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out, dpi=150)
-    plt.close(fig)
-    return out
-
-
 def main() -> None:
     subs = json.loads((RAW_DIR / "substations.geojson").read_text(encoding="utf-8"))
     lines = json.loads((RAW_DIR / "lines.geojson").read_text(encoding="utf-8"))
     G, _ = graph.build_national_graph(subs, lines)
     sub = graph.extract_subregion(G, region=None, max_nodes=12)
 
-    paths = [
-        plot_national(G, highlight=set(sub.nodes), out=FIG_DIR / "national_grid.png"),
-        plot_subgraph(sub, out=FIG_DIR / "valle_central_subgrid.png"),
-    ]
-
-    plants_path = RAW_DIR / "plants.geojson"
-    if plants_path.exists():
-        plants = json.loads(plants_path.read_text(encoding="utf-8"))
-        report = graph.annotate_generators(G, plants)
-        paths.append(plot_plants_overlay(G, plants, report,
-                                         out=FIG_DIR / "national_grid_plants.png"))
-        paths.append(plot_plants_coverage(report,
-                                          out=FIG_DIR / "generation_coverage.png"))
-
+    p1 = plot_national(G, highlight=set(sub.nodes), out=FIG_DIR / "national_grid.png")
+    p2 = plot_subgraph(sub, out=FIG_DIR / "valle_central_subgrid.png")
     print("Figures generated:")
-    for p in paths:
-        print(" -", p)
+    print(" -", p1)
+    print(" -", p2)
 
 
 if __name__ == "__main__":

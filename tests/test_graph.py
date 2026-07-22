@@ -36,20 +36,6 @@ def test_normalize_drops_siepac_suffix():
     assert graph.normalize_name("Jaco (SIEPAC)") == "jaco"
 
 
-def test_normalize_plant_name_drops_roman_numerals():
-    assert graph.normalize_plant_name("Miravalles I") == "miravalles"
-    assert graph.normalize_plant_name("Miravalles III") == "miravalles"
-    assert graph.normalize_plant_name("Toro II") == "toro"
-    assert graph.normalize_plant_name("Moin II") == "moin"
-
-
-def test_normalize_plant_name_keeps_non_roman_words():
-    # "Solar" and "Pozo" are ordinary words, not bay numerals.
-    assert graph.normalize_plant_name("Miravalles Solar") == "miravalles solar"
-    assert graph.normalize_plant_name("Boca Pozo") == "boca pozo"
-    assert graph.normalize_plant_name("Cachí") == "cachi"
-
-
 # --------------------------------------------------------------------------
 # Circuit parsing
 # --------------------------------------------------------------------------
@@ -134,73 +120,6 @@ def test_unrecognized_endpoint_is_marked_as_border():
     assert G.nodes["liberia"]["border"] is False
     assert G.nodes["frontera nicaragua"]["border"] is True
     assert "frontera nicaragua" in report["unrecognized_endpoints"]
-
-
-# --------------------------------------------------------------------------
-# Generator annotation from the plants layer
-# --------------------------------------------------------------------------
-
-def _fake_geojson_plants(entries):
-    feats = []
-    for name, tech, mw in entries:
-        feats.append({
-            "properties": {"Planta": name, "Tecnologia": tech,
-                           "PotenciaEfectivaMW": mw, "EstAct": "Activo"},
-            "geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
-        })
-    return {"features": feats}
-
-
-def test_annotate_generators_direct_match():
-    subs = _fake_geojson_subs([("Arenal", "Guanacaste"), ("Liberia", "Guanacaste")])
-    lines = _fake_geojson_lines([("Arenal-Liberia", 230)])
-    G, _ = graph.build_national_graph(subs, lines)
-    plants = _fake_geojson_plants([("Arenal", "Hidroeléctrico", 166)])
-    report = graph.annotate_generators(G, plants)
-    assert G.nodes["arenal"]["generator"] is True
-    assert G.nodes["arenal"]["generation_mw"] == 166
-    assert G.nodes["arenal"]["technologies"] == ["Hidroeléctrico"]
-    assert G.nodes["liberia"]["generator"] is False
-    assert report["matched"] == [{"plant": "Arenal", "node": "arenal",
-                                  "technology": "Hidroeléctrico", "mw": 166}]
-    assert report["unmatched"] == []
-
-
-def test_annotate_generators_roman_suffix_aggregates_on_one_node():
-    subs = _fake_geojson_subs([("Miravalles", "Guanacaste"), ("Liberia", "Guanacaste")])
-    lines = _fake_geojson_lines([("Miravalles-Liberia", 230)])
-    G, _ = graph.build_national_graph(subs, lines)
-    plants = _fake_geojson_plants([("Miravalles I", "Geotérmico", 55),
-                                   ("Miravalles II", "Geotérmico", 55)])
-    graph.annotate_generators(G, plants)
-    assert G.nodes["miravalles"]["generator"] is True
-    assert G.nodes["miravalles"]["generation_mw"] == 110
-    assert G.nodes["miravalles"]["technologies"] == ["Geotérmico"]
-
-
-def test_annotate_generators_reports_unmatched():
-    subs = _fake_geojson_subs([("Liberia", "Guanacaste"), ("Canas", "Guanacaste")])
-    lines = _fake_geojson_lines([("Liberia-Canas", 230)])
-    G, _ = graph.build_national_graph(subs, lines)
-    plants = _fake_geojson_plants([("El General", "Hidroeléctrico", 39)])
-    report = graph.annotate_generators(G, plants)
-    assert report["matched"] == []
-    assert report["unmatched"] == [{"plant": "El General",
-                                    "technology": "Hidroeléctrico", "mw": 39}]
-
-
-def test_to_json_includes_generator_fields():
-    subs = _fake_geojson_subs([("Arenal", "Guanacaste"), ("Liberia", "Guanacaste")])
-    lines = _fake_geojson_lines([("Arenal-Liberia", 230)])
-    G, _ = graph.build_national_graph(subs, lines)
-    plants = _fake_geojson_plants([("Arenal", "Hidroeléctrico", 166)])
-    graph.annotate_generators(G, plants)
-    doc = graph.to_json(G)
-    by_id = {n["id"]: n for n in doc["nodes"]}
-    assert by_id["arenal"]["generator"] is True
-    assert by_id["arenal"]["generation_mw"] == 166
-    assert by_id["arenal"]["technologies"] == ["Hidroeléctrico"]
-    assert by_id["liberia"]["generator"] is False
 
 
 # --------------------------------------------------------------------------
@@ -296,30 +215,6 @@ def test_real_snapshot_connectivity_mode_preserves_cycles():
         assert nx.is_connected(sub)
         cycles = sub.number_of_edges() - sub.number_of_nodes() + 1
         assert cycles >= 1, f"N={n} came out without cycles"
-
-
-def test_ice_data_declares_plants_layer():
-    from src import ice_data
-    assert "plants" in ice_data.LAYERS
-
-
-has_plants = (RAW / "plants.geojson").exists()
-real_plants = pytest.mark.skipif(not (has_snapshot and has_plants),
-                                 reason="ICE plants snapshot not available")
-
-
-@real_plants
-def test_real_snapshot_plants_annotation():
-    import json
-    subs = json.loads((RAW / "substations.geojson").read_text(encoding="utf-8"))
-    lines = json.loads((RAW / "lines.geojson").read_text(encoding="utf-8"))
-    plants = json.loads((RAW / "plants.geojson").read_text(encoding="utf-8"))
-    G, _ = graph.build_national_graph(subs, lines)
-    report = graph.annotate_generators(G, plants)
-    # Direct + roman-suffix matches: at least 20 of the 32 ICE plants.
-    assert len(report["matched"]) >= 20
-    techs = {m["technology"] for m in report["matched"]}
-    assert {"Hidroeléctrico", "Geotérmico", "Eólico"} <= techs
 
 
 @real

@@ -2,8 +2,7 @@
   "source": "ICE Electricity Sector Open Data Portal (ArcGIS Hub)",
   "urls": {
     "substations": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/Subestaciones/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson",
-    "lines": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/LineasDeTransmision/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson",
-    "plants": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/Plantas_NGICE/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson"
+    "lines": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/LineasDeTransmision/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson"
   },
-  "download_date": "2026-07-22"
+  "download_date": "2026-07-20"
 }

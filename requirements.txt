@@ -5,6 +5,7 @@ qnexus
 selene-sim
 
 # Scientific computing / optimization
+numpy
 scipy
 optax
 cvxpy

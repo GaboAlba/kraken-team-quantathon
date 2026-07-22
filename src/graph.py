@@ -34,6 +34,16 @@ _ALIASES = {
     "garita": "la garita",
 }
 
+# Subgrid chosen for the experiments: northern Guanacaste. Guanacaste
+# substations with lat >= 10.4, minus the leaves filadelfia/sandillal/tejona
+# and the isolated tanque. Forms the 230 kV ring Liberia-Pailas-Mogote-
+# Miravalles-Arenal-Corobici-Canas-Liberia (1 cycle) plus the
+# Papagayo-Nuevo Colon branch.
+GUANACASTE_NORTH = [
+    "arenal", "canas", "corobici", "liberia", "miravalles",
+    "mogote", "nuevo colon", "pailas", "papagayo",
+]
+
 
 def normalize_name(s: str | None) -> str:
     """Normalize a name so circuits can be matched against substations.
@@ -302,7 +312,8 @@ def build(
 
 
 if __name__ == "__main__":
-    g = build()
+    g = build(nodes=GUANACASTE_NORTH, label="guanacaste_north",
+              max_nodes=len(GUANACASTE_NORTH))
     print(f"Subgrid: {g.number_of_nodes()} nodes, {g.number_of_edges()} edges "
           f"-> {DEFAULT_OUTPUT}")
     print("Nodes:", ", ".join(sorted(g.nodes)))

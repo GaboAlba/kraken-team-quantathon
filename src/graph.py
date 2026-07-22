@@ -1,15 +1,15 @@
-"""Construcción del grafo de la red eléctrica a partir de los datos del ICE.
+"""Construction of the electrical grid graph from the ICE data.
 
-Pipeline (Tarea A):
+Pipeline (Task A):
 
-    snapshot ICE (GeoJSON)  ->  grafo nacional (NetworkX)  ->  subred  ->  grid_cr.json
+    ICE snapshot (GeoJSON)  ->  national graph (NetworkX)  ->  subgrid  ->  grid_cr.json
 
-- Nodos: subestaciones (capa ``Subestaciones``).
-- Aristas: líneas de transmisión (capa ``LineasDeTransmision``). La conectividad
-  se deriva del campo ``Circuito`` con formato ``"SubestaciónA-SubestaciónB"``.
-- Peso: función intercambiable de ``src.weights`` (default ``kv``).
+- Nodes: substations (``Subestaciones`` layer).
+- Edges: transmission lines (``LineasDeTransmision`` layer). Connectivity is
+  derived from the ``Circuito`` field with format ``"SubstationA-SubstationB"``.
+- Weight: interchangeable function from ``src.weights`` (default ``kv``).
 
-Ver ``Docs/desiciones.md`` para la justificación de cada decisión.
+See ``Docs/desiciones.md`` for the rationale behind each decision.
 """
 
 from __future__ import annotations
@@ -28,46 +28,46 @@ ROOT = Path(__file__).resolve().parent.parent
 RAW_DIR = ROOT / "data" / "raw"
 DEFAULT_OUTPUT = ROOT / "data" / "grid_cr.json"
 
-# Alias conocidos: nombre en el campo Circuito -> nombre real de la subestación.
-# Se aplican tras la normalización general.
+# Known aliases: name in the Circuito field -> actual substation name.
+# Applied after the general normalization.
 _ALIASES = {
     "garita": "la garita",
 }
 
 
 def normalize_name(s: str | None) -> str:
-    """Normaliza un nombre para poder comparar circuitos con subestaciones.
+    """Normalize a name so circuits can be matched against substations.
 
-    - pasa a minúsculas y elimina acentos;
-    - colapsa espacios;
-    - quita el sufijo entre paréntesis (p.ej. ``"(SIEPAC)"``);
-    - quita un dígito final de bahía/circuito (``"Colima2"`` -> ``"colima"``).
+    - lowercases and strips accents;
+    - collapses whitespace;
+    - drops the parenthesized suffix (e.g. ``"(SIEPAC)"``);
+    - drops a trailing bay/circuit digit (``"Colima2"`` -> ``"colima"``).
     """
     if not s:
         return ""
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
     s = s.lower()
-    s = re.sub(r"\(.*?\)", " ", s)          # quita "(siepac)" y similares
+    s = re.sub(r"\(.*?\)", " ", s)          # drops "(siepac)" and the like
     s = re.sub(r"\s+", " ", s).strip()
-    s = re.sub(r"\s*\d+$", "", s)           # quita dígito final ("colima2")
+    s = re.sub(r"\s*\d+$", "", s)           # drops trailing digit ("colima2")
     return s.strip()
 
 
 def _canonical(name: str) -> str:
-    """Aplica normalización + alias para obtener el identificador de nodo."""
+    """Apply normalization + aliases to obtain the node identifier."""
     n = normalize_name(name)
     return _ALIASES.get(n, n)
 
 
-def parse_circuit(circuito: str | None) -> tuple[str, str] | None:
-    """Devuelve los dos extremos normalizados de un circuito ``"A-B"``.
+def parse_circuit(circuit: str | None) -> tuple[str, str] | None:
+    """Return the two normalized endpoints of an ``"A-B"`` circuit.
 
-    Devuelve ``None`` si el formato no es exactamente dos partes separadas por
-    un guion (p.ej. ``"SIEPAC"`` o cadenas vacías).
+    Returns ``None`` if the format is not exactly two parts separated by a
+    hyphen (e.g. ``"SIEPAC"`` or empty strings).
     """
-    if not circuito:
+    if not circuit:
         return None
-    parts = circuito.split("-")
+    parts = circuit.split("-")
     if len(parts) != 2:
         return None
     a, b = _canonical(parts[0]), _canonical(parts[1])
@@ -77,24 +77,24 @@ def parse_circuit(circuito: str | None) -> tuple[str, str] | None:
 
 
 def parse_substations(geojson: dict) -> dict[str, dict]:
-    """Extrae los nodos (subestaciones) del GeoJSON como id -> atributos."""
+    """Extract the nodes (substations) from the GeoJSON as id -> attributes."""
     nodes: dict[str, dict] = {}
     for feat in geojson.get("features", []):
         props = feat.get("properties", {})
-        nombre = props.get("Subestacio")
-        if not nombre:
+        name = props.get("Subestacio")
+        if not name:
             continue
-        node_id = _canonical(nombre)
+        node_id = _canonical(name)
         geom = feat.get("geometry") or {}
         coords = geom.get("coordinates") or [None, None]
         nodes[node_id] = {
             "id": node_id,
-            "nombre": nombre,
-            "provincia": props.get("Provincia"),
+            "name": name,
+            "province": props.get("Provincia"),
             "canton": props.get("Canton"),
             "x": coords[0],
             "y": coords[1],
-            "frontera": False,
+            "border": False,
         }
     return nodes
 
@@ -104,14 +104,15 @@ def build_national_graph(
     lines_geojson: dict,
     weight_scheme: str = weights.DEFAULT_SCHEME,
 ) -> tuple[nx.Graph, dict]:
-    """Construye el grafo nacional ponderado.
+    """Build the weighted national graph.
 
-    Los extremos de circuito que no correspondan a una subestación conocida se
-    agregan como nodos de *frontera* (``frontera=True``): interconexiones
-    internacionales, SIEPAC o cargas industriales. Las líneas paralelas entre el
-    mismo par se colapsan sumando sus pesos.
+    Circuit endpoints that do not match a known substation are added as
+    *border* nodes (``border=True``): international interconnections, SIEPAC
+    or industrial loads. Parallel lines between the same pair are collapsed by
+    summing their weights.
 
-    Devuelve ``(grafo, reporte)`` donde ``reporte`` documenta lo no reconocido.
+    Returns ``(graph, report)`` where ``report`` documents what was not
+    recognized.
     """
     weight_fn = weights.SCHEMES[weight_scheme]
     G = nx.Graph()
@@ -120,43 +121,43 @@ def build_national_graph(
     for node_id, attrs in nodes.items():
         G.add_node(node_id, **attrs)
 
-    extremos_no_reconocidos: set[str] = set()
-    circuitos_ignorados: list[str] = []
+    unrecognized_endpoints: set[str] = set()
+    ignored_circuits: list[str] = []
 
     for feat in lines_geojson.get("features", []):
         props = feat.get("properties", {})
         endpoints = parse_circuit(props.get("Circuito"))
         if endpoints is None:
-            circuitos_ignorados.append(props.get("Circuito"))
+            ignored_circuits.append(props.get("Circuito"))
             continue
         u, v = endpoints
         if u == v:
             continue
 
-        # Extremos desconocidos -> nodos de frontera.
+        # Unknown endpoints -> border nodes.
         for ep in (u, v):
             if ep not in G:
-                G.add_node(ep, id=ep, nombre=ep.title(), provincia=None,
-                           canton=None, x=None, y=None, frontera=True)
-                extremos_no_reconocidos.add(ep)
+                G.add_node(ep, id=ep, name=ep.title(), province=None,
+                           canton=None, x=None, y=None, border=True)
+                unrecognized_endpoints.add(ep)
 
-        voltaje = props.get("Voltaje")
+        voltage = props.get("Voltaje")
         length_m = props.get("Shape__Length")
-        w = weight_fn(voltaje=voltaje, length_m=length_m)
+        w = weight_fn(voltage=voltage, length_m=length_m)
 
         if G.has_edge(u, v):
-            # Línea paralela: sumamos peso y conservamos la mayor tensión.
+            # Parallel line: sum the weights and keep the highest voltage.
             G[u][v]["weight"] += w
-            G[u][v]["voltaje"] = max(G[u][v]["voltaje"], voltaje)
+            G[u][v]["voltage"] = max(G[u][v]["voltage"], voltage)
         else:
-            G.add_edge(u, v, weight=w, voltaje=voltaje,
-                       circuito=props.get("Circuito"))
+            G.add_edge(u, v, weight=w, voltage=voltage,
+                       circuit=props.get("Circuito"))
 
     report = {
-        "extremos_no_reconocidos": sorted(extremos_no_reconocidos),
-        "circuitos_ignorados": circuitos_ignorados,
-        "n_nodos": G.number_of_nodes(),
-        "n_aristas": G.number_of_edges(),
+        "unrecognized_endpoints": sorted(unrecognized_endpoints),
+        "ignored_circuits": ignored_circuits,
+        "n_nodes": G.number_of_nodes(),
+        "n_edges": G.number_of_edges(),
     }
     return G, report
 
@@ -167,23 +168,23 @@ def extract_subregion(
     nodes: list[str] | None = None,
     max_nodes: int = 12,
 ) -> nx.Graph:
-    """Extrae una subred conexa de a lo sumo ``max_nodes`` nodos.
+    """Extract a connected subgrid of at most ``max_nodes`` nodes.
 
-    Modos de selección (excluyentes):
-      - ``nodes``: lista explícita de ids de subestación;
-      - ``region``: provincia (comparada de forma laxa);
-      - ninguno (**modo conectividad**, default): todas las subestaciones reales,
-        que preserva la malla nacional y sus ciclos.
+    Selection modes (mutually exclusive):
+      - ``nodes``: explicit list of substation ids;
+      - ``region``: province (matched loosely);
+      - neither (**connectivity mode**, default): all real substations, which
+        preserves the national mesh and its cycles.
 
-    En todos los casos se toma el subgrafo inducido, se conserva la **componente
-    conexa más grande** y, si excede ``max_nodes``, se recorta con un crecimiento
-    tipo BFS desde el nodo de mayor grado ponderado para mantener la conexidad.
-    El nodo semilla y los desempates son deterministas (orden alfabético) para
-    garantizar reproducibilidad.
+    In all cases the induced subgraph is taken, the **largest connected
+    component** is kept and, if it exceeds ``max_nodes``, it is trimmed with a
+    BFS-style growth from the highest weighted-degree node to keep it connected.
+    The seed node and tie-breaks are deterministic (alphabetical order) to
+    guarantee reproducibility.
 
-    Nota: filtrar por una sola provincia produce subgrafos casi radiales (árboles),
-    cuyo Max-Cut es trivial; el modo conectividad se usa por defecto en los
-    experimentos porque conserva ciclos (ver ``Docs/desiciones.md``).
+    Note: filtering by a single province yields almost radial subgraphs (trees),
+    whose Max-Cut is trivial; connectivity mode is the default in the
+    experiments because it preserves cycles (see ``Docs/desiciones.md``).
     """
     if nodes is not None:
         selected = [n for n in nodes if n in G]
@@ -191,24 +192,24 @@ def extract_subregion(
         r = normalize_name(region)
         selected = [
             n for n, d in G.nodes(data=True)
-            if d.get("provincia") and normalize_name(d["provincia"]) == r
+            if d.get("province") and normalize_name(d["province"]) == r
         ]
     else:
-        # Modo conectividad: solo subestaciones reales (sin nodos de frontera).
-        selected = [n for n, d in G.nodes(data=True) if not d.get("frontera")]
+        # Connectivity mode: real substations only (no border nodes).
+        selected = [n for n, d in G.nodes(data=True) if not d.get("border")]
 
     H = G.subgraph(selected).copy()
     if H.number_of_nodes() == 0:
         return H
 
-    # Componente conexa más grande (desempate determinista por nodo mínimo).
+    # Largest connected component (deterministic tie-break by minimum node).
     largest = max(nx.connected_components(H), key=lambda c: (len(c), min(c)))
     H = H.subgraph(largest).copy()
 
     if H.number_of_nodes() <= max_nodes:
         return H
 
-    # Recorte conexo: BFS desde el nodo de mayor grado ponderado (determinista).
+    # Connected trim: BFS from the highest weighted-degree node (deterministic).
     seed = max(H.nodes, key=lambda n: (H.degree(n, weight="weight"), n))
     keep = [seed]
     for _, node in nx.bfs_edges(H, seed):
@@ -219,16 +220,16 @@ def extract_subregion(
 
 
 def to_json(G: nx.Graph, metadata: dict | None = None) -> dict:
-    """Serializa el grafo al esquema de ``grid_cr.json``."""
+    """Serialize the graph to the ``grid_cr.json`` schema."""
     nodes = [
         {
             "id": n,
-            "nombre": d.get("nombre"),
-            "provincia": d.get("provincia"),
+            "name": d.get("name"),
+            "province": d.get("province"),
             "canton": d.get("canton"),
             "x": d.get("x"),
             "y": d.get("y"),
-            "frontera": d.get("frontera", False),
+            "border": d.get("border", False),
         }
         for n, d in G.nodes(data=True)
     ]
@@ -237,8 +238,8 @@ def to_json(G: nx.Graph, metadata: dict | None = None) -> dict:
             "u": u,
             "v": v,
             "weight": d.get("weight"),
-            "voltaje": d.get("voltaje"),
-            "circuito": d.get("circuito"),
+            "voltage": d.get("voltage"),
+            "circuit": d.get("circuit"),
         }
         for u, v, d in G.edges(data=True)
     ]
@@ -246,7 +247,7 @@ def to_json(G: nx.Graph, metadata: dict | None = None) -> dict:
 
 
 def save_graph(G: nx.Graph, path: Path, metadata: dict | None = None) -> Path:
-    """Escribe el grafo a disco en formato JSON."""
+    """Write the graph to disk in JSON format."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     doc = to_json(G, metadata)
@@ -263,38 +264,38 @@ def build(
     output: Path = DEFAULT_OUTPUT,
     raw_dir: Path = RAW_DIR,
 ) -> nx.Graph:
-    """Orquesta el pipeline completo y escribe ``data/grid_cr.json``.
+    """Orchestrate the full pipeline and write ``data/grid_cr.json``.
 
-    Por defecto (``region=None``) usa el modo conectividad, que produce el cluster
-    mallado del Valle Central; ``region="Guanacaste"`` selecciona esa provincia.
+    By default (``region=None``) it uses connectivity mode, which yields the
+    meshed Valle Central cluster; ``region="Guanacaste"`` selects that province.
     """
-    subs = json.loads((raw_dir / "subestaciones.geojson").read_text(encoding="utf-8"))
-    lines = json.loads((raw_dir / "lineas.geojson").read_text(encoding="utf-8"))
-    fuente = {}
-    fuente_path = raw_dir / "fuente.json"
-    if fuente_path.exists():
-        fuente = json.loads(fuente_path.read_text(encoding="utf-8"))
+    subs = json.loads((raw_dir / "substations.geojson").read_text(encoding="utf-8"))
+    lines = json.loads((raw_dir / "lines.geojson").read_text(encoding="utf-8"))
+    source_info = {}
+    source_path = raw_dir / "source.json"
+    if source_path.exists():
+        source_info = json.loads(source_path.read_text(encoding="utf-8"))
 
     G, report = build_national_graph(subs, lines, weight_scheme=weight_scheme)
     sub = extract_subregion(G, region=region, nodes=nodes, max_nodes=max_nodes)
 
-    # Número de ciclos independientes: indicador de cuán "interesante" es el Max-Cut.
-    ciclos = (sub.number_of_edges() - sub.number_of_nodes()
+    # Number of independent cycles: indicator of how "interesting" the Max-Cut is.
+    cycles = (sub.number_of_edges() - sub.number_of_nodes()
               + nx.number_connected_components(sub)) if sub.number_of_nodes() else 0
 
     metadata = {
-        "fuente": fuente.get("fuente"),
-        "urls": fuente.get("urls"),
-        "fecha_descarga": fuente.get("fecha_descarga"),
-        "fecha_construccion": date.today().isoformat(),
-        "esquema_peso": weight_scheme,
+        "source": source_info.get("source"),
+        "urls": source_info.get("urls"),
+        "download_date": source_info.get("download_date"),
+        "build_date": date.today().isoformat(),
+        "weight_scheme": weight_scheme,
         "region": region if region is not None else label,
-        "modo_seleccion": "nodos" if nodes else ("provincia" if region else "conectividad"),
+        "selection_mode": "nodes" if nodes else ("province" if region else "connectivity"),
         "max_nodes": max_nodes,
-        "n_nodos": sub.number_of_nodes(),
-        "n_aristas": sub.number_of_edges(),
-        "ciclos_independientes": ciclos,
-        "reporte_nacional": report,
+        "n_nodes": sub.number_of_nodes(),
+        "n_edges": sub.number_of_edges(),
+        "independent_cycles": cycles,
+        "national_report": report,
     }
     save_graph(sub, output, metadata)
     return sub
@@ -302,6 +303,6 @@ def build(
 
 if __name__ == "__main__":
     g = build()
-    print(f"Subred: {g.number_of_nodes()} nodos, {g.number_of_edges()} aristas "
+    print(f"Subgrid: {g.number_of_nodes()} nodes, {g.number_of_edges()} edges "
           f"-> {DEFAULT_OUTPUT}")
-    print("Nodos:", ", ".join(sorted(g.nodes)))
+    print("Nodes:", ", ".join(sorted(g.nodes)))

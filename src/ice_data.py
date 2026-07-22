@@ -1,15 +1,15 @@
-"""Descarga y snapshot de los datos abiertos del ICE (portal ArcGIS).
+"""Download and snapshot of the ICE open data (ArcGIS portal).
 
-Este módulo obtiene las dos capas que necesitamos para construir el grafo de la
-red eléctrica y guarda una copia estática (snapshot) en ``data/raw/``. El resto
-del pipeline lee siempre desde el snapshot, nunca en vivo, para garantizar la
-reproducibilidad de la entrega.
+This module fetches the two layers we need to build the electrical grid graph
+and stores a static copy (snapshot) in ``data/raw/``. The rest of the pipeline
+always reads from the snapshot, never live, to guarantee the reproducibility of
+the deliverable.
 
-Capas:
-  - Subestaciones      -> nodos del grafo
-  - LineasDeTransmision -> aristas del grafo
+Layers:
+  - Subestaciones       -> graph nodes (substations)
+  - LineasDeTransmision -> graph edges (transmission lines)
 
-Fuente: Portal de Datos Abiertos del Sector Electricidad del ICE (ArcGIS Hub).
+Source: ICE Electricity Sector Open Data Portal (ArcGIS Hub).
 """
 
 from __future__ import annotations
@@ -20,21 +20,21 @@ import urllib.request
 from datetime import date
 from pathlib import Path
 
-# Servicio de features (ArcGIS REST) del ICE.
+# ICE feature service (ArcGIS REST).
 BASE_URL = "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services"
 
-# Cada entrada: nombre de la capa -> (ruta del servicio, archivo de snapshot).
+# Each entry: layer name -> service path (snapshot file is "<name>.geojson").
 LAYERS = {
-    "subestaciones": "Subestaciones/FeatureServer/0",
-    "lineas": "LineasDeTransmision/FeatureServer/0",
+    "substations": "Subestaciones/FeatureServer/0",
+    "lines": "LineasDeTransmision/FeatureServer/0",
 }
 
-# Directorio donde guardamos el snapshot estático (relativo a la raíz del repo).
+# Directory where the static snapshot is stored (relative to the repo root).
 RAW_DIR = Path(__file__).resolve().parent.parent / "data" / "raw"
 
 
 def _query_url(layer_path: str) -> str:
-    """Construye la URL de consulta GeoJSON para descargar la capa completa."""
+    """Build the GeoJSON query URL to download the full layer."""
     params = urllib.parse.urlencode(
         {"where": "1=1", "outFields": "*", "f": "geojson"}
     )
@@ -42,18 +42,18 @@ def _query_url(layer_path: str) -> str:
 
 
 def download_layer(layer_path: str, timeout: int = 60) -> dict:
-    """Descarga una capa del servicio ArcGIS y la devuelve como dict GeoJSON."""
+    """Download a layer from the ArcGIS service and return it as a GeoJSON dict."""
     url = _query_url(layer_path)
     with urllib.request.urlopen(url, timeout=timeout) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 
 def snapshot(force: bool = False, raw_dir: Path = RAW_DIR) -> dict[str, Path]:
-    """Descarga las capas y las guarda en ``data/raw/``.
+    """Download the layers and store them in ``data/raw/``.
 
-    Si el snapshot ya existe no se vuelve a descargar, salvo ``force=True``.
-    Devuelve un mapa nombre_de_capa -> ruta del archivo guardado.
-    Además escribe ``data/raw/fuente.json`` con las URLs y la fecha de descarga.
+    If the snapshot already exists it is not downloaded again, unless
+    ``force=True``. Returns a map layer_name -> path of the saved file.
+    Also writes ``data/raw/source.json`` with the URLs and the download date.
     """
     raw_dir.mkdir(parents=True, exist_ok=True)
     paths: dict[str, Path] = {}
@@ -69,13 +69,13 @@ def snapshot(force: bool = False, raw_dir: Path = RAW_DIR) -> dict[str, Path]:
         out.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
         paths[name] = out
 
-    # Registro de procedencia para el informe y la reproducibilidad.
-    (raw_dir / "fuente.json").write_text(
+    # Provenance record for the report and reproducibility.
+    (raw_dir / "source.json").write_text(
         json.dumps(
             {
-                "fuente": "Portal de Datos Abiertos del Sector Electricidad del ICE (ArcGIS Hub)",
+                "source": "ICE Electricity Sector Open Data Portal (ArcGIS Hub)",
                 "urls": urls,
-                "fecha_descarga": date.today().isoformat(),
+                "download_date": date.today().isoformat(),
             },
             ensure_ascii=False,
             indent=2,
@@ -86,11 +86,11 @@ def snapshot(force: bool = False, raw_dir: Path = RAW_DIR) -> dict[str, Path]:
 
 
 def load_snapshot(name: str, raw_dir: Path = RAW_DIR) -> dict:
-    """Carga una capa desde el snapshot local (GeoJSON)."""
+    """Load a layer from the local snapshot (GeoJSON)."""
     path = raw_dir / f"{name}.geojson"
     if not path.exists():
         raise FileNotFoundError(
-            f"No existe el snapshot '{path}'. Ejecuta ice_data.snapshot() primero."
+            f"Snapshot '{path}' does not exist. Run ice_data.snapshot() first."
         )
     return json.loads(path.read_text(encoding="utf-8"))
 

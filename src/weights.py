@@ -1,38 +1,38 @@
-"""Esquemas de peso para las aristas del grafo (líneas de transmisión).
+"""Weight schemes for the graph edges (transmission lines).
 
-El peso de una arista representa qué tan relevante es poder cortarla (colocar un
-elemento de protección) ante una falla: a mayor peso, más crítica la línea para
-la partición en zonas de falla.
+An edge's weight represents how relevant it is to cut it (place a protection
+element) in the event of a fault: the higher the weight, the more critical the
+line is for the fault-zone partition.
 
-Todos los esquemas son funciones ``fn(voltaje, length_m) -> float`` positivas,
-intercambiables mediante el registro ``SCHEMES``. El esquema por defecto es
-``kv`` (nivel de tensión), documentado y justificado en ``Docs/desiciones.md``.
+All schemes are positive functions ``fn(voltage, length_m) -> float``,
+interchangeable through the ``SCHEMES`` registry. The default scheme is ``kv``
+(voltage level), documented and justified in ``Docs/desiciones.md``.
 """
 
 from __future__ import annotations
 
-# Tensión de referencia (la más alta del sistema nacional) para normalizar.
+# Reference voltage (the highest in the national system) used for normalization.
 _KV_REF = 230.0
 
 
-def _kv(voltaje: float, length_m: float) -> float:
-    """Peso = nivel de tensión en kV (230 o 138). Esquema por defecto."""
-    return float(voltaje)
+def _kv(voltage: float, length_m: float) -> float:
+    """Weight = voltage level in kV (230 or 138). Default scheme."""
+    return float(voltage)
 
 
-def _kv_normalized(voltaje: float, length_m: float) -> float:
-    """Peso = tensión normalizada al rango (0, 1] respecto de 230 kV."""
-    return float(voltaje) / _KV_REF
+def _kv_normalized(voltage: float, length_m: float) -> float:
+    """Weight = voltage normalized to the (0, 1] range relative to 230 kV."""
+    return float(voltage) / _KV_REF
 
 
-def _kv_over_length(voltaje: float, length_m: float) -> float:
-    """Peso = tensión normalizada dividida por la longitud en km.
+def _kv_over_length(voltage: float, length_m: float) -> float:
+    """Weight = normalized voltage divided by the length in km.
 
-    Proxy de acoplamiento eléctrico: líneas cortas y de alta tensión acoplan más.
-    Se protege contra longitudes nulas o ausentes.
+    Proxy for electrical coupling: short, high-voltage lines couple more.
+    Guards against null or missing lengths.
     """
     length_km = max(float(length_m or 0.0) / 1000.0, 1e-3)
-    return (float(voltaje) / _KV_REF) / length_km
+    return (float(voltage) / _KV_REF) / length_km
 
 
 SCHEMES = {

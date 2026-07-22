@@ -12,7 +12,7 @@ weighted `nx.Graph` of the Costa Rican grid and serializes it to `data/grid_cr.j
 ## Project conventions (match these)
 
 - The grid is an **undirected** `nx.Graph`. Nodes are substation ids (normalized,
-  lowercase Spanish names); edges carry `weight`, `voltaje`, `circuito`.
+  lowercase names); edges carry `weight`, `voltaje`, `circuito`.
 - Node attributes used across the codebase: `nombre`, `provincia`, `canton`,
   `x`, `y` (lon/lat), `frontera` (bool — border/interconnection node).
 - **Determinism is required.** Any node ordering, seed, or tie-break must be

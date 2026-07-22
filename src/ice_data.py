@@ -8,6 +8,7 @@ the deliverable.
 Layers:
   - Subestaciones       -> graph nodes (substations)
   - LineasDeTransmision -> graph edges (transmission lines)
+  - Plantas_NGICE       -> generation plants (node annotation: technology, MW)
 
 Source: ICE Electricity Sector Open Data Portal (ArcGIS Hub).
 """
@@ -27,6 +28,7 @@ BASE_URL = "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services"
 LAYERS = {
     "substations": "Subestaciones/FeatureServer/0",
     "lines": "LineasDeTransmision/FeatureServer/0",
+    "plants": "Plantas_NGICE/FeatureServer/0",
 }
 
 # Directory where the static snapshot is stored (relative to the repo root).

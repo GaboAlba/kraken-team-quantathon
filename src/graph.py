@@ -59,6 +59,20 @@ def _canonical(name: str) -> str:
     return _ALIASES.get(n, n)
 
 
+_ROMAN_SUFFIX = re.compile(r"\s+[ivxl]+$")
+
+
+def normalize_plant_name(s: str | None) -> str:
+    """Normalize a generation plant name to match substation node ids.
+
+    Plants use roman-numeral unit suffixes (``"Miravalles II"``, ``"Toro III"``)
+    where substations use the bare name, so the trailing numeral is dropped on
+    top of the regular :func:`normalize_name` rules.
+    """
+    n = normalize_name(s)
+    return _ROMAN_SUFFIX.sub("", n)
+
+
 def parse_circuit(circuit: str | None) -> tuple[str, str] | None:
     """Return the two normalized endpoints of an ``"A-B"`` circuit.
 
@@ -162,6 +176,43 @@ def build_national_graph(
     return G, report
 
 
+def annotate_generators(G: nx.Graph, plants_geojson: dict) -> dict:
+    """Mark nodes that host generation plants (``Plantas_NGICE`` layer).
+
+    Matching is by name: :func:`normalize_plant_name` + ``_ALIASES`` against the
+    node ids. Several plants can land on one node (e.g. Miravalles I/II/III);
+    their MW are summed and their technologies collected.
+
+    Returns ``{"matched": [...], "unmatched": [...]}`` with one entry per plant.
+    """
+    for _, d in G.nodes(data=True):
+        d.setdefault("generator", False)
+        d.setdefault("technologies", [])
+        d.setdefault("generation_mw", 0.0)
+
+    matched: list[dict] = []
+    unmatched: list[dict] = []
+    for feat in plants_geojson.get("features", []):
+        props = feat.get("properties", {})
+        plant = props.get("Planta")
+        if not plant:
+            continue
+        tech = props.get("Tecnologia")
+        mw = props.get("PotenciaEfectivaMW") or 0.0
+        node = normalize_plant_name(plant)
+        node = _ALIASES.get(node, node)
+        if node in G:
+            d = G.nodes[node]
+            d["generator"] = True
+            d["generation_mw"] += mw
+            if tech and tech not in d["technologies"]:
+                d["technologies"] = sorted(d["technologies"] + [tech])
+            matched.append({"plant": plant, "node": node, "technology": tech, "mw": mw})
+        else:
+            unmatched.append({"plant": plant, "technology": tech, "mw": mw})
+    return {"matched": matched, "unmatched": unmatched}
+
+
 def extract_subregion(
     G: nx.Graph,
     region: str | None = None,
@@ -230,6 +281,9 @@ def to_json(G: nx.Graph, metadata: dict | None = None) -> dict:
             "x": d.get("x"),
             "y": d.get("y"),
             "border": d.get("border", False),
+            "generator": d.get("generator", False),
+            "technologies": d.get("technologies", []),
+            "generation_mw": d.get("generation_mw", 0.0),
         }
         for n, d in G.nodes(data=True)
     ]
@@ -277,6 +331,16 @@ def build(
         source_info = json.loads(source_path.read_text(encoding="utf-8"))
 
     G, report = build_national_graph(subs, lines, weight_scheme=weight_scheme)
+
+    plants_path = raw_dir / "plants.geojson"
+    if plants_path.exists():
+        plants = json.loads(plants_path.read_text(encoding="utf-8"))
+        plants_report = annotate_generators(G, plants)
+        report["plants"] = {
+            "n_matched": len(plants_report["matched"]),
+            "unmatched": [p["plant"] for p in plants_report["unmatched"]],
+        }
+
     sub = extract_subregion(G, region=region, nodes=nodes, max_nodes=max_nodes)
 
     # Number of independent cycles: indicator of how "interesting" the Max-Cut is.

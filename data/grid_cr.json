@@ -3,11 +3,10 @@
     "source": "ICE Electricity Sector Open Data Portal (ArcGIS Hub)",
     "urls": {
       "substations": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/Subestaciones/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson",
-      "lines": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/LineasDeTransmision/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson",
-      "plants": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/Plantas_NGICE/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson"
+      "lines": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/LineasDeTransmision/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson"
     },
-    "download_date": "2026-07-22",
-    "build_date": "2026-07-22",
+    "download_date": "2026-07-20",
+    "build_date": "2026-07-21",
     "weight_scheme": "kv",
     "region": "valle_central",
     "selection_mode": "connectivity",
@@ -27,24 +26,19 @@
         "SIEPAC"
       ],
       "n_nodes": 75,
-      "n_edges": 97,
-      "plants": {
-        "n_matched": 23,
-        "unmatched": [
-          "Boca Pozo",
-          "Dengo",
-          "Echandi",
-          "Ventanas Garita",
-          "Miravalles Solar",
-          "Guápiles",
-          "Orotina",
-          "La Joya",
-          "El General"
-        ]
-      }
+      "n_edges": 97
     }
   },
   "nodes": [
+    {
+      "id": "belen",
+      "name": "Belen",
+      "province": "Heredia",
+      "canton": "Belen",
+      "x": -84.1727882631211,
+      "y": 9.99678991218218,
+      "border": false
+    },
     {
       "id": "la garita",
       "name": "La Garita",
@@ -52,48 +46,7 @@
       "canton": "Alajuela",
       "x": -84.3593273953882,
       "y": 9.92871152165449,
-      "border": false,
-      "generator": true,
-      "technologies": [
-        "Hidroeléctrico"
-      ],
-      "generation_mw": 40.0
-    },
-    {
-      "id": "escazu",
-      "name": "Escazú",
-      "province": "San José",
-      "canton": "Escazú",
-      "x": -84.1615307762048,
-      "y": 9.93550877790663,
-      "border": false,
-      "generator": false,
-      "technologies": [],
-      "generation_mw": 0.0
-    },
-    {
-      "id": "la caja",
-      "name": "La Caja",
-      "province": "San Jose",
-      "canton": "San Jose",
-      "x": -84.1659977254549,
-      "y": 9.96469179813076,
-      "border": false,
-      "generator": false,
-      "technologies": [],
-      "generation_mw": 0.0
-    },
-    {
-      "id": "el coco",
-      "name": "El Coco",
-      "province": "Alajuela",
-      "canton": "Alajuela",
-      "x": -84.2254708389885,
-      "y": 9.99809986742623,
-      "border": false,
-      "generator": false,
-      "technologies": [],
-      "generation_mw": 0.0
+      "border": false
     },
     {
       "id": "coyol",
@@ -102,82 +55,7 @@
       "canton": "Alajuela",
       "x": -84.2694614295508,
       "y": 9.99215878267053,
-      "border": false,
-      "generator": false,
-      "technologies": [],
-      "generation_mw": 0.0
-    },
-    {
-      "id": "naranjo",
-      "name": "Naranjo",
-      "province": "Alajuela",
-      "canton": "Naranjo",
-      "x": -84.371277621695,
-      "y": 10.0873381721484,
-      "border": false,
-      "generator": false,
-      "technologies": [],
-      "generation_mw": 0.0
-    },
-    {
-      "id": "colima",
-      "name": "Colima",
-      "province": "San Jose",
-      "canton": "Tibas",
-      "x": -84.0905336958344,
-      "y": 9.95221134899667,
-      "border": false,
-      "generator": false,
-      "technologies": [],
-      "generation_mw": 0.0
-    },
-    {
-      "id": "belen",
-      "name": "Belen",
-      "province": "Heredia",
-      "canton": "Belen",
-      "x": -84.1727882631211,
-      "y": 9.99678991218218,
-      "border": false,
-      "generator": false,
-      "technologies": [],
-      "generation_mw": 0.0
-    },
-    {
-      "id": "alajuelita",
-      "name": "Alajuelita",
-      "province": "San Jose",
-      "canton": "Alajuelita",
-      "x": -84.1104412741054,
-      "y": 9.91277769892899,
-      "border": false,
-      "generator": false,
-      "technologies": [],
-      "generation_mw": 0.0
-    },
-    {
-      "id": "heredia",
-      "name": "Heredia",
-      "province": "Heredia",
-      "canton": "Heredia",
-      "x": -84.1200188484355,
-      "y": 9.98287954156834,
-      "border": false,
-      "generator": false,
-      "technologies": [],
-      "generation_mw": 0.0
-    },
-    {
-      "id": "ribera",
-      "name": "Ribera",
-      "province": "Heredia",
-      "canton": "Belen",
-      "x": -84.1695564037503,
-      "y": 9.99092500452512,
-      "border": false,
-      "generator": false,
-      "technologies": [],
-      "generation_mw": 0.0
+      "border": false
     },
     {
       "id": "lindora",
@@ -186,13 +64,96 @@
       "canton": "Santa Ana",
       "x": -84.2128942557041,
       "y": 9.95950795877904,
-      "border": false,
-      "generator": false,
-      "technologies": [],
-      "generation_mw": 0.0
+      "border": false
+    },
+    {
+      "id": "naranjo",
+      "name": "Naranjo",
+      "province": "Alajuela",
+      "canton": "Naranjo",
+      "x": -84.371277621695,
+      "y": 10.0873381721484,
+      "border": false
+    },
+    {
+      "id": "ribera",
+      "name": "Ribera",
+      "province": "Heredia",
+      "canton": "Belen",
+      "x": -84.1695564037503,
+      "y": 9.99092500452512,
+      "border": false
+    },
+    {
+      "id": "alajuelita",
+      "name": "Alajuelita",
+      "province": "San Jose",
+      "canton": "Alajuelita",
+      "x": -84.1104412741054,
+      "y": 9.91277769892899,
+      "border": false
+    },
+    {
+      "id": "colima",
+      "name": "Colima",
+      "province": "San Jose",
+      "canton": "Tibas",
+      "x": -84.0905336958344,
+      "y": 9.95221134899667,
+      "border": false
+    },
+    {
+      "id": "la caja",
+      "name": "La Caja",
+      "province": "San Jose",
+      "canton": "San Jose",
+      "x": -84.1659977254549,
+      "y": 9.96469179813076,
+      "border": false
+    },
+    {
+      "id": "heredia",
+      "name": "Heredia",
+      "province": "Heredia",
+      "canton": "Heredia",
+      "x": -84.1200188484355,
+      "y": 9.98287954156834,
+      "border": false
+    },
+    {
+      "id": "escazu",
+      "name": "Escazú",
+      "province": "San José",
+      "canton": "Escazú",
+      "x": -84.1615307762048,
+      "y": 9.93550877790663,
+      "border": false
+    },
+    {
+      "id": "el coco",
+      "name": "El Coco",
+      "province": "Alajuela",
+      "canton": "Alajuela",
+      "x": -84.2254708389885,
+      "y": 9.99809986742623,
+      "border": false
     }
   ],
   "edges": [
+    {
+      "u": "belen",
+      "v": "la caja",
+      "weight": 230.0,
+      "voltage": 230,
+      "circuit": "La Caja-Belen2"
+    },
+    {
+      "u": "belen",
+      "v": "ribera",
+      "weight": 230.0,
+      "voltage": 230,
+      "circuit": "Ribera-Belén"
+    },
     {
       "u": "la garita",
       "v": "naranjo",
@@ -222,32 +183,53 @@
       "circuit": "Garita-Lindora"
     },
     {
-      "u": "escazu",
+      "u": "coyol",
       "v": "la caja",
-      "weight": 138.0,
-      "voltage": 138,
-      "circuit": "Escazu-La Caja"
+      "weight": 230.0,
+      "voltage": 230,
+      "circuit": "Coyol-La Caja"
     },
     {
-      "u": "la caja",
-      "v": "alajuelita",
-      "weight": 138.0,
-      "voltage": 138,
-      "circuit": "Alajuelita-La Caja"
-    },
-    {
-      "u": "la caja",
-      "v": "lindora",
+      "u": "lindora",
+      "v": "la caja",
       "weight": 460.0,
       "voltage": 230,
       "circuit": "Lindora-La Caja"
     },
     {
-      "u": "la caja",
-      "v": "colima",
+      "u": "ribera",
+      "v": "la caja",
+      "weight": 230.0,
+      "voltage": 230,
+      "circuit": "La Caja-Ribera"
+    },
+    {
+      "u": "alajuelita",
+      "v": "la caja",
+      "weight": 138.0,
+      "voltage": 138,
+      "circuit": "Alajuelita-La Caja"
+    },
+    {
+      "u": "colima",
+      "v": "la caja",
       "weight": 138.0,
       "voltage": 138,
       "circuit": "La Caja-Colima"
+    },
+    {
+      "u": "colima",
+      "v": "heredia",
+      "weight": 138.0,
+      "voltage": 138,
+      "circuit": "Heredia-Colima"
+    },
+    {
+      "u": "la caja",
+      "v": "escazu",
+      "weight": 138.0,
+      "voltage": 138,
+      "circuit": "Escazu-La Caja"
     },
     {
       "u": "la caja",
@@ -258,45 +240,10 @@
     },
     {
       "u": "la caja",
-      "v": "belen",
-      "weight": 230.0,
-      "voltage": 230,
-      "circuit": "La Caja-Belen2"
-    },
-    {
-      "u": "la caja",
-      "v": "ribera",
-      "weight": 230.0,
-      "voltage": 230,
-      "circuit": "La Caja-Ribera"
-    },
-    {
-      "u": "la caja",
       "v": "el coco",
       "weight": 138.0,
       "voltage": 138,
       "circuit": "El Coco-La Caja"
-    },
-    {
-      "u": "la caja",
-      "v": "coyol",
-      "weight": 230.0,
-      "voltage": 230,
-      "circuit": "Coyol-La Caja"
-    },
-    {
-      "u": "colima",
-      "v": "heredia",
-      "weight": 138.0,
-      "voltage": 138,
-      "circuit": "Heredia-Colima"
-    },
-    {
-      "u": "belen",
-      "v": "ribera",
-      "weight": 230.0,
-      "voltage": 230,
-      "circuit": "Ribera-Belén"
     }
   ]
 }

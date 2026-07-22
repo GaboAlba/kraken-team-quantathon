@@ -217,6 +217,38 @@ def test_real_snapshot_connectivity_mode_preserves_cycles():
         assert cycles >= 1, f"N={n} came out without cycles"
 
 
+GUANACASTE_NORTH_EXPECTED = {
+    "arenal", "canas", "corobici", "liberia", "miravalles",
+    "mogote", "nuevo colon", "pailas", "papagayo",
+}
+
+
+@real
+def test_real_snapshot_guanacaste_north_selection():
+    import json
+    subs = json.loads((RAW / "substations.geojson").read_text(encoding="utf-8"))
+    lines = json.loads((RAW / "lines.geojson").read_text(encoding="utf-8"))
+    G, _ = graph.build_national_graph(subs, lines)
+    sub = graph.extract_subregion(G, nodes=graph.GUANACASTE_NORTH)
+    assert set(sub.nodes) == GUANACASTE_NORTH_EXPECTED
+    assert nx.is_connected(sub)
+    # The ring Liberia-Pailas-Mogote-Miravalles-Arenal-Corobici-Canas-Liberia.
+    assert sub.number_of_edges() - sub.number_of_nodes() + 1 == 1
+
+
+@real
+def test_real_snapshot_build_writes_guanacaste_north(tmp_path):
+    out = tmp_path / "grid.json"
+    sub = graph.build(nodes=graph.GUANACASTE_NORTH, label="guanacaste_north",
+                      max_nodes=len(graph.GUANACASTE_NORTH), output=out)
+    import json
+    doc = json.loads(out.read_text(encoding="utf-8"))
+    assert doc["metadata"]["region"] == "guanacaste_north"
+    assert doc["metadata"]["selection_mode"] == "nodes"
+    assert {n["id"] for n in doc["nodes"]} == GUANACASTE_NORTH_EXPECTED
+    assert sub.number_of_nodes() == 9
+
+
 @real
 def test_real_snapshot_connectivity_is_deterministic():
     import json

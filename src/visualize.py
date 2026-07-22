@@ -3,9 +3,9 @@
 Generates two figures from the ICE snapshot:
 
   1. The full national grid, with substations placed at their real geographic
-     coordinates (lon/lat) and lines colored by voltage level. The Valle
-     Central cluster used as the default subgrid is highlighted.
-  2. The Valle Central subgrid alone, with node labels and edge weights.
+     coordinates (lon/lat) and lines colored by voltage level. The chosen
+     subgrid (northern Guanacaste) is highlighted.
+  2. The chosen subgrid alone, with node labels and edge weights.
 
 Usage:
     python -m src.visualize
@@ -43,7 +43,8 @@ def _positions(G: nx.Graph) -> dict:
     }
 
 
-def plot_national(G: nx.Graph, highlight: set[str], out: Path) -> Path:
+def plot_national(G: nx.Graph, highlight: set[str], out: Path,
+                  highlight_label: str = "Chosen subgrid") -> Path:
     """Plot the national grid using the real coordinates."""
     pos = _positions(G)
     G = G.subgraph(pos).copy()  # nodes with coordinates only
@@ -66,7 +67,7 @@ def plot_national(G: nx.Graph, highlight: set[str], out: Path) -> Path:
     if highlight:
         ax.scatter([pos[n][0] for n in highlight], [pos[n][1] for n in highlight],
                    s=90, c="#2ca02c", edgecolors="black", linewidths=0.6,
-                   zorder=3, label="Valle Central subgrid")
+                   zorder=3, label=highlight_label)
 
     # Voltage legend.
     for kv, color in VOLT_COLOR.items():
@@ -87,7 +88,8 @@ def plot_national(G: nx.Graph, highlight: set[str], out: Path) -> Path:
     return out
 
 
-def plot_subgraph(sub: nx.Graph, out: Path) -> Path:
+def plot_subgraph(sub: nx.Graph, out: Path,
+                  label: str = "Chosen subgrid") -> Path:
     """Plot the subgrid with node labels and edge weights."""
     pos = _positions(sub)
     if len(pos) < sub.number_of_nodes():
@@ -113,7 +115,7 @@ def plot_subgraph(sub: nx.Graph, out: Path) -> Path:
 
     cycles = sub.number_of_edges() - sub.number_of_nodes() + \
         nx.number_connected_components(sub)
-    ax.set_title("Valle Central subgrid (subgraph for Max-Cut / QAOA)\n"
+    ax.set_title(f"{label} (subgraph for Max-Cut / QAOA)\n"
                  f"{sub.number_of_nodes()} nodes · {sub.number_of_edges()} edges · "
                  f"{cycles} cycles · weight = kV",
                  fontsize=13)
@@ -131,10 +133,13 @@ def main() -> None:
     subs = json.loads((RAW_DIR / "substations.geojson").read_text(encoding="utf-8"))
     lines = json.loads((RAW_DIR / "lines.geojson").read_text(encoding="utf-8"))
     G, _ = graph.build_national_graph(subs, lines)
-    sub = graph.extract_subregion(G, region=None, max_nodes=12)
+    sub = graph.extract_subregion(G, nodes=graph.GUANACASTE_NORTH,
+                                  max_nodes=len(graph.GUANACASTE_NORTH))
 
-    p1 = plot_national(G, highlight=set(sub.nodes), out=FIG_DIR / "national_grid.png")
-    p2 = plot_subgraph(sub, out=FIG_DIR / "valle_central_subgrid.png")
+    p1 = plot_national(G, highlight=set(sub.nodes), out=FIG_DIR / "national_grid.png",
+                       highlight_label="Guanacaste North subgrid")
+    p2 = plot_subgraph(sub, out=FIG_DIR / "guanacaste_north_subgrid.png",
+                       label="Guanacaste North subgrid")
     print("Figures generated:")
     print(" -", p1)
     print(" -", p2)

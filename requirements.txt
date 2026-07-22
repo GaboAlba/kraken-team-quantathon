@@ -13,3 +13,7 @@ matplotlib
 
 # Testing
 pytest
+
+# Notebooks
+jupyter
+ipykernel

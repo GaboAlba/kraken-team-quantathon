@@ -8,6 +8,7 @@ the deliverable.
 Layers:
   - Subestaciones       -> graph nodes (substations)
   - LineasDeTransmision -> graph edges (transmission lines)
+  - Plantas_NGICE       -> generation plants (assigned to nearby substations)
 
 Source: ICE Electricity Sector Open Data Portal (ArcGIS Hub).
 """
@@ -27,25 +28,47 @@ BASE_URL = "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services"
 LAYERS = {
     "substations": "Subestaciones/FeatureServer/0",
     "lines": "LineasDeTransmision/FeatureServer/0",
+    "plants": "Plantas_NGICE/FeatureServer/0",
 }
 
 # Directory where the static snapshot is stored (relative to the repo root).
 RAW_DIR = Path(__file__).resolve().parent.parent / "data" / "raw"
 
 
-def _query_url(layer_path: str) -> str:
-    """Build the GeoJSON query URL to download the full layer."""
+def _query_url(layer_path: str, offset: int = 0) -> str:
+    """Build the GeoJSON query URL to download a layer page.
+
+    ``offset`` drives server-side pagination (``resultOffset``); the service
+    caps each response at its ``maxRecordCount``, so layers that exceed it are
+    fetched page by page (see ``download_layer``).
+    """
     params = urllib.parse.urlencode(
-        {"where": "1=1", "outFields": "*", "f": "geojson"}
+        {"where": "1=1", "outFields": "*", "f": "geojson", "resultOffset": offset}
     )
     return f"{BASE_URL}/{layer_path}/query?{params}"
 
 
 def download_layer(layer_path: str, timeout: int = 60) -> dict:
-    """Download a layer from the ArcGIS service and return it as a GeoJSON dict."""
-    url = _query_url(layer_path)
-    with urllib.request.urlopen(url, timeout=timeout) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    """Download a full layer from the ArcGIS service as a GeoJSON dict.
+
+    Follows ``exceededTransferLimit`` pagination so layers larger than the
+    service ``maxRecordCount`` (e.g. the generation plants) are returned
+    complete, in a single merged FeatureCollection.
+    """
+    features: list[dict] = []
+    offset = 0
+    while True:
+        url = _query_url(layer_path, offset=offset)
+        with urllib.request.urlopen(url, timeout=timeout) as resp:
+            page = json.loads(resp.read().decode("utf-8"))
+        page_features = page.get("features", [])
+        features.extend(page_features)
+        exceeded = page.get("properties", {}).get("exceededTransferLimit", False)
+        if not exceeded or not page_features:
+            page["features"] = features
+            page.pop("properties", None)
+            return page
+        offset += len(page_features)
 
 
 def snapshot(force: bool = False, raw_dir: Path = RAW_DIR) -> dict[str, Path]:

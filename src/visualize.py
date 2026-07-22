@@ -59,6 +59,11 @@ def plot_national(G: nx.Graph, highlight: set[str], out: Path,
             y = [pos[u][1], pos[v][1]]
             ax.plot(x, y, color=_edge_color(d.get("voltage")), lw=1.4, alpha=0.7,
                     zorder=1)
+            ax.text((x[0] + x[1]) / 2, (y[0] + y[1]) / 2,
+                    f"{d.get('weight', 0.0):.1f}", fontsize=5.5,
+                    ha="center", va="center", zorder=4,
+                    bbox=dict(boxstyle="round,pad=0.12", fc="white",
+                              ec="none", alpha=0.65))
 
     # Nodes: highlighted (Valle Central) vs. the rest.
     rest = [n for n in G.nodes if n not in highlight]
@@ -68,6 +73,12 @@ def plot_national(G: nx.Graph, highlight: set[str], out: Path,
         ax.scatter([pos[n][0] for n in highlight], [pos[n][1] for n in highlight],
                    s=90, c="#2ca02c", edgecolors="black", linewidths=0.6,
                    zorder=3, label=highlight_label)
+    generator_nodes = [n for n, d in G.nodes(data=True) if d.get("n_generators", 0) > 0]
+    if generator_nodes:
+        ax.scatter([pos[n][0] for n in generator_nodes],
+                   [pos[n][1] for n in generator_nodes],
+                   s=130, facecolors="none", edgecolors="#ffbf00", linewidths=1.0,
+                   zorder=5, label="Generation")
 
     # Voltage legend.
     for kv, color in VOLT_COLOR.items():
@@ -105,7 +116,7 @@ def plot_subgraph(sub: nx.Graph, out: Path,
     labels = {n: d.get("name", n) for n, d in sub.nodes(data=True)}
     nx.draw_networkx_labels(sub, pos, labels, ax=ax, font_size=8)
 
-    edge_labels = {(u, v): f"{int(d['weight'])}" for u, v, d in sub.edges(data=True)}
+    edge_labels = {(u, v): f"{d['weight']:.1f}" for u, v, d in sub.edges(data=True)}
     nx.draw_networkx_edge_labels(sub, pos, edge_labels, ax=ax, font_size=7,
                                  label_pos=0.5, bbox=dict(boxstyle="round,pad=0.15",
                                  fc="white", ec="none", alpha=0.7))
@@ -117,7 +128,7 @@ def plot_subgraph(sub: nx.Graph, out: Path,
         nx.number_connected_components(sub)
     ax.set_title(f"{label} (subgraph for Max-Cut / QAOA)\n"
                  f"{sub.number_of_nodes()} nodes · {sub.number_of_edges()} edges · "
-                 f"{cycles} cycles · weight = kV",
+                 f"{cycles} cycles · weight = generation",
                  fontsize=13)
     ax.legend(loc="best", framealpha=0.9)
     ax.axis("off")

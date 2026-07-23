@@ -8,8 +8,8 @@ Pipeline (Task A):
   (``Plantas_NGICE`` layer) within 20 km are attached to each substation node.
 - Edges: transmission lines (``LineasDeTransmision`` layer). Connectivity is
   derived from the ``Circuito`` field with format ``"SubstationA-SubstationB"``.
-- Weight: interchangeable function from ``src.weights`` (default ``generation``,
-  which is generator-aware).
+- Weight: interchangeable function from ``src.weights`` (default
+  ``generation_inverted``, which is generator-aware; see ``docs/qubo.md``).
 
 See ``Docs/desiciones.md`` for the rationale behind each decision.
 """
@@ -167,7 +167,7 @@ def _distance_m(x1: float, y1: float, x2: float, y2: float) -> float:
 def assign_generators(
     G: nx.Graph,
     generators: list[dict],
-    radius_m: float = 20000.0,
+    radius_m: float = 10000.0,
 ) -> nx.Graph:
     """Attach generators within ``radius_m`` of each substation to its node.
 

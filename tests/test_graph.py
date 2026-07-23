@@ -66,7 +66,11 @@ def test_weight_kv_normalized_between_0_and_1():
 
 
 def test_weight_all_schemes_are_positive():
+    # generation_inverted is intentionally sign-inverted (mostly positive but
+    # not guaranteed), so it is excluded from this positivity invariant.
     for name, fn in weights.SCHEMES.items():
+        if name == "generation_inverted":
+            continue
         assert fn(voltage=138, length_m=2500) > 0, name
 
 
@@ -268,7 +272,8 @@ def test_build_national_graph_with_plants_uses_generation_weight():
         ("Far Solar", "Solar", "Activo", 51000.0, 0.0, 7.0),
     ])
 
-    G, _ = graph.build_national_graph(subs, lines, plants_geojson=plants)
+    G, _ = graph.build_national_graph(subs, lines, plants_geojson=plants,
+                                      weight_scheme="generation")
 
     assert G.nodes["alpha"]["n_generators"] == 1
     assert G.nodes["beta"]["n_generators"] == 1

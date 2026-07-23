@@ -8,6 +8,12 @@
 ## Challenge
 We are solving Challenge #1
 
+## Documentation
+
+* [QUBO / Max-Cut formulation (Task B)](docs/qubo.md) — design decisions behind
+  `src/qubo.py`: the cut objective (minimize-cut), the sign-inverted
+  `generation` weight scheme, and the generator-spread and balance penalties.
+
 ## Setup
 
 This project uses a Python virtual environment (`.venv`) so everyone develops against the same set of dependencies, listed in [`requirements.txt`](requirements.txt).

@@ -78,3 +78,8 @@ skill before writing code against that library.
 - **Tests:** synthetic-data tests cover pure logic; tests decorated with the local
   `@real` marker (`pytest.mark.skipif`) run against the ICE snapshot and are skipped
   automatically when `data/raw/` is absent. Prefer synthetic fixtures for new logic.
+- **Keep the validation notebook current:** whenever new code changes the pipeline
+  (new/edited functions, weight formulas, node/edge attributes, serialization),
+  update `notebooks/validation.ipynb` so each step can still be manually validated,
+  then re-execute it end-to-end (`python -m jupyter nbconvert --to notebook --execute
+  --inplace notebooks/validation.ipynb`) to confirm all cells and assertions pass.

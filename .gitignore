@@ -219,3 +219,9 @@ __marimo__/
 
 # Docs
 Docs/
+
+# macOS
+.DS_Store
+
+# Generated figures
+figures/

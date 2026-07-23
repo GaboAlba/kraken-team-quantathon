@@ -1,249 +1,504 @@
 {
   "metadata": {
-    "fuente": "Portal de Datos Abiertos del Sector Electricidad del ICE (ArcGIS Hub)",
+    "source": "ICE Electricity Sector Open Data Portal (ArcGIS Hub)",
     "urls": {
-      "subestaciones": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/Subestaciones/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson",
-      "lineas": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/LineasDeTransmision/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson"
+      "substations": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/Subestaciones/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson&resultOffset=0",
+      "lines": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/LineasDeTransmision/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson&resultOffset=0",
+      "plants": "https://services1.arcgis.com/cW2GfO4rBCLoFwgj/arcgis/rest/services/Plantas_NGICE/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=geojson&resultOffset=0"
     },
-    "fecha_descarga": "2026-07-20",
-    "fecha_construccion": "2026-07-21",
-    "esquema_peso": "kv",
-    "region": "valle_central",
-    "modo_seleccion": "conectividad",
-    "max_nodes": 12,
-    "n_nodos": 12,
-    "n_aristas": 15,
-    "ciclos_independientes": 4,
-    "reporte_nacional": {
-      "extremos_no_reconocidos": [
+    "download_date": "2026-07-22",
+    "build_date": "2026-07-22",
+    "weight_scheme": "generation",
+    "max_generator_power_mw": 306.2,
+    "region": "guanacaste_north",
+    "selection_mode": "nodes",
+    "max_nodes": 9,
+    "n_nodes": 9,
+    "n_edges": 9,
+    "independent_cycles": 1,
+    "national_report": {
+      "unrecognized_endpoints": [
         "aguas calientes",
         "cemex",
         "changuinola",
         "frontera nicaragua",
         "progreso"
       ],
-      "circuitos_ignorados": [
+      "ignored_circuits": [
         "SIEPAC"
       ],
-      "n_nodos": 75,
-      "n_aristas": 97
+      "n_nodes": 75,
+      "n_edges": 97
     }
   },
   "nodes": [
     {
-      "id": "el coco",
-      "nombre": "El Coco",
-      "provincia": "Alajuela",
-      "canton": "Alajuela",
-      "x": -84.2254708389885,
-      "y": 9.99809986742623,
-      "frontera": false
+      "id": "miravalles",
+      "name": "Miravalles",
+      "province": "Guanacaste",
+      "canton": "Bagaces",
+      "x": -85.1932537699486,
+      "y": 10.701481507002,
+      "border": false,
+      "generators": [
+        {
+          "plant": "Miravalles I",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 42.38,
+          "dist_m": 117.0,
+          "power_norm": 0.13840627041149578
+        },
+        {
+          "plant": "Miravalles II",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 42.32,
+          "dist_m": 122.0,
+          "power_norm": 0.13821032005225342
+        },
+        {
+          "plant": "Miravalles V",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 6,
+          "dist_m": 1968.9,
+          "power_norm": 0.019595035924232528
+        },
+        {
+          "plant": "Miravalles III",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 27.02,
+          "dist_m": 2221.7,
+          "power_norm": 0.08824297844546049
+        },
+        {
+          "plant": "Miravalles Solar",
+          "technology": "Solar",
+          "thermal": false,
+          "power_mw": 1,
+          "dist_m": 2372.6,
+          "power_norm": 0.0032658393207054214
+        },
+        {
+          "plant": "Boca Pozo",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 5,
+          "dist_m": 3555.0,
+          "power_norm": 0.016329196603527107
+        },
+        {
+          "plant": "Pailas II",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 52,
+          "dist_m": 17877.6,
+          "power_norm": 0.1698236446766819
+        },
+        {
+          "plant": "Pailas I",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 35,
+          "dist_m": 19219.5,
+          "power_norm": 0.11430437622468975
+        }
+      ],
+      "n_generators": 8,
+      "n_thermal": 0
     },
     {
-      "id": "naranjo",
-      "nombre": "Naranjo",
-      "provincia": "Alajuela",
-      "canton": "Naranjo",
-      "x": -84.371277621695,
-      "y": 10.0873381721484,
-      "frontera": false
+      "id": "papagayo",
+      "name": "Papagayo",
+      "province": "Guanacaste",
+      "canton": "Liberia",
+      "x": -85.6055963931614,
+      "y": 10.6637018567001,
+      "border": false,
+      "generators": [],
+      "n_generators": 0,
+      "n_thermal": 0
     },
     {
-      "id": "lindora",
-      "nombre": "Lindora",
-      "provincia": "San Jose",
-      "canton": "Santa Ana",
-      "x": -84.2128942557041,
-      "y": 9.95950795877904,
-      "frontera": false
+      "id": "canas",
+      "name": "Cañas",
+      "province": "Guanacaste",
+      "canton": "Cañas",
+      "x": -85.1236323586436,
+      "y": 10.4234985773189,
+      "border": false,
+      "generators": [
+        {
+          "plant": "Sandillal",
+          "technology": "Hidroeléctrico",
+          "thermal": false,
+          "power_mw": 30.97,
+          "dist_m": 5048.8,
+          "power_norm": 0.10114304376224689
+        },
+        {
+          "plant": "Dengo",
+          "technology": "Hidroeléctrico",
+          "thermal": false,
+          "power_mw": 174.01,
+          "dist_m": 7275.2,
+          "power_norm": 0.5682887001959503
+        },
+        {
+          "plant": "Arenal",
+          "technology": "Hidroeléctrico",
+          "thermal": false,
+          "power_mw": 166,
+          "dist_m": 14818.3,
+          "power_norm": 0.5421293272371
+        },
+        {
+          "plant": "Tejona",
+          "technology": "Eólico",
+          "thermal": false,
+          "power_mw": 13.2,
+          "dist_m": 18256.1,
+          "power_norm": 0.04310907903331156
+        }
+      ],
+      "n_generators": 4,
+      "n_thermal": 0
     },
     {
-      "id": "la caja",
-      "nombre": "La Caja",
-      "provincia": "San Jose",
-      "canton": "San Jose",
-      "x": -84.1659977254549,
-      "y": 9.96469179813076,
-      "frontera": false
+      "id": "mogote",
+      "name": "Mogote",
+      "province": "Guanacaste",
+      "canton": "Bagaces",
+      "x": -85.267612029714,
+      "y": 10.725715627784,
+      "border": false,
+      "generators": [
+        {
+          "plant": "Miravalles I",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 42.38,
+          "dist_m": 8493.4,
+          "power_norm": 0.13840627041149578
+        },
+        {
+          "plant": "Miravalles II",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 42.32,
+          "dist_m": 8553.2,
+          "power_norm": 0.13821032005225342
+        },
+        {
+          "plant": "Pailas II",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 52,
+          "dist_m": 9323.5,
+          "power_norm": 0.1698236446766819
+        },
+        {
+          "plant": "Miravalles V",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 6,
+          "dist_m": 9386.7,
+          "power_norm": 0.019595035924232528
+        },
+        {
+          "plant": "Miravalles III",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 27.02,
+          "dist_m": 9466.3,
+          "power_norm": 0.08824297844546049
+        },
+        {
+          "plant": "Miravalles Solar",
+          "technology": "Solar",
+          "thermal": false,
+          "power_mw": 1,
+          "dist_m": 9621.5,
+          "power_norm": 0.0032658393207054214
+        },
+        {
+          "plant": "Pailas I",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 35,
+          "dist_m": 10654.5,
+          "power_norm": 0.11430437622468975
+        },
+        {
+          "plant": "Boca Pozo",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 5,
+          "dist_m": 11699.3,
+          "power_norm": 0.016329196603527107
+        }
+      ],
+      "n_generators": 8,
+      "n_thermal": 0
     },
     {
-      "id": "coyol",
-      "nombre": "Coyol",
-      "provincia": "Alajuela",
-      "canton": "Alajuela",
-      "x": -84.2694614295508,
-      "y": 9.99215878267053,
-      "frontera": false
+      "id": "pailas",
+      "name": "Pailas",
+      "province": "Guanacaste",
+      "canton": "Liberia",
+      "x": -85.3589556083694,
+      "y": 10.7560934802952,
+      "border": false,
+      "generators": [
+        {
+          "plant": "Pailas I",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 35,
+          "dist_m": 145.3,
+          "power_norm": 0.11430437622468975
+        },
+        {
+          "plant": "Pailas II",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 52,
+          "dist_m": 1381.3,
+          "power_norm": 0.1698236446766819
+        },
+        {
+          "plant": "Miravalles I",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 42.38,
+          "dist_m": 19036.2,
+          "power_norm": 0.13840627041149578
+        },
+        {
+          "plant": "Miravalles II",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 42.32,
+          "dist_m": 19095.9,
+          "power_norm": 0.13821032005225342
+        },
+        {
+          "plant": "Miravalles V",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 6,
+          "dist_m": 19836.6,
+          "power_norm": 0.019595035924232528
+        },
+        {
+          "plant": "Miravalles III",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 27.02,
+          "dist_m": 19874.7,
+          "power_norm": 0.08824297844546049
+        }
+      ],
+      "n_generators": 6,
+      "n_thermal": 0
     },
     {
-      "id": "ribera",
-      "nombre": "Ribera",
-      "provincia": "Heredia",
-      "canton": "Belen",
-      "x": -84.1695564037503,
-      "y": 9.99092500452512,
-      "frontera": false
+      "id": "liberia",
+      "name": "Liberia",
+      "province": "Guanacaste",
+      "canton": "Liberia",
+      "x": -85.44574374991,
+      "y": 10.6153551397224,
+      "border": false,
+      "generators": [
+        {
+          "plant": "Pailas I",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 35,
+          "dist_m": 18304.9,
+          "power_norm": 0.11430437622468975
+        },
+        {
+          "plant": "Pailas II",
+          "technology": "Geotérmico",
+          "thermal": false,
+          "power_mw": 52,
+          "dist_m": 19137.6,
+          "power_norm": 0.1698236446766819
+        }
+      ],
+      "n_generators": 2,
+      "n_thermal": 0
     },
     {
-      "id": "la garita",
-      "nombre": "La Garita",
-      "provincia": "Alajuela",
-      "canton": "Alajuela",
-      "x": -84.3593273953882,
-      "y": 9.92871152165449,
-      "frontera": false
+      "id": "corobici",
+      "name": "Corobici",
+      "province": "Guanacaste",
+      "canton": "Cañas",
+      "x": -85.0778213507225,
+      "y": 10.4712932222768,
+      "border": false,
+      "generators": [
+        {
+          "plant": "Dengo",
+          "technology": "Hidroeléctrico",
+          "thermal": false,
+          "power_mw": 174.01,
+          "dist_m": 257.9,
+          "power_norm": 0.5682887001959503
+        },
+        {
+          "plant": "Sandillal",
+          "technology": "Hidroeléctrico",
+          "thermal": false,
+          "power_mw": 30.97,
+          "dist_m": 2898.2,
+          "power_norm": 0.10114304376224689
+        },
+        {
+          "plant": "Arenal",
+          "technology": "Hidroeléctrico",
+          "thermal": false,
+          "power_mw": 166,
+          "dist_m": 8653.9,
+          "power_norm": 0.5421293272371
+        },
+        {
+          "plant": "Tejona",
+          "technology": "Eólico",
+          "thermal": false,
+          "power_mw": 13.2,
+          "dist_m": 11131.4,
+          "power_norm": 0.04310907903331156
+        }
+      ],
+      "n_generators": 4,
+      "n_thermal": 0
     },
     {
-      "id": "heredia",
-      "nombre": "Heredia",
-      "provincia": "Heredia",
-      "canton": "Heredia",
-      "x": -84.1200188484355,
-      "y": 9.98287954156834,
-      "frontera": false
+      "id": "arenal",
+      "name": "Arenal",
+      "province": "Guanacaste",
+      "canton": "Tilaran",
+      "x": -85.0002881841908,
+      "y": 10.4727301596314,
+      "border": false,
+      "generators": [
+        {
+          "plant": "Arenal",
+          "technology": "Hidroeléctrico",
+          "thermal": false,
+          "power_mw": 166,
+          "dist_m": 338.0,
+          "power_norm": 0.5421293272371
+        },
+        {
+          "plant": "Tejona",
+          "technology": "Eólico",
+          "thermal": false,
+          "power_mw": 13.2,
+          "dist_m": 5655.5,
+          "power_norm": 0.04310907903331156
+        },
+        {
+          "plant": "Dengo",
+          "technology": "Hidroeléctrico",
+          "thermal": false,
+          "power_mw": 174.01,
+          "dist_m": 8321.2,
+          "power_norm": 0.5682887001959503
+        },
+        {
+          "plant": "Sandillal",
+          "technology": "Hidroeléctrico",
+          "thermal": false,
+          "power_mw": 30.97,
+          "dist_m": 11324.6,
+          "power_norm": 0.10114304376224689
+        }
+      ],
+      "n_generators": 4,
+      "n_thermal": 0
     },
     {
-      "id": "escazu",
-      "nombre": "Escazú",
-      "provincia": "San José",
-      "canton": "Escazú",
-      "x": -84.1615307762048,
-      "y": 9.93550877790663,
-      "frontera": false
-    },
-    {
-      "id": "colima",
-      "nombre": "Colima",
-      "provincia": "San Jose",
-      "canton": "Tibas",
-      "x": -84.0905336958344,
-      "y": 9.95221134899667,
-      "frontera": false
-    },
-    {
-      "id": "alajuelita",
-      "nombre": "Alajuelita",
-      "provincia": "San Jose",
-      "canton": "Alajuelita",
-      "x": -84.1104412741054,
-      "y": 9.91277769892899,
-      "frontera": false
-    },
-    {
-      "id": "belen",
-      "nombre": "Belen",
-      "provincia": "Heredia",
-      "canton": "Belen",
-      "x": -84.1727882631211,
-      "y": 9.99678991218218,
-      "frontera": false
+      "id": "nuevo colon",
+      "name": "Nuevo Colon",
+      "province": "Guanacaste",
+      "canton": "Carrillo",
+      "x": -85.7149104775674,
+      "y": 10.5072195364139,
+      "border": false,
+      "generators": [],
+      "n_generators": 0,
+      "n_thermal": 0
     }
   ],
   "edges": [
     {
-      "u": "el coco",
-      "v": "la garita",
-      "weight": 138.0,
-      "voltaje": 138,
-      "circuito": "Garita-El Coco"
+      "u": "miravalles",
+      "v": "mogote",
+      "weight": -16.10635532331809,
+      "voltage": 230,
+      "circuit": "Miravalles-Mogote"
     },
     {
-      "u": "el coco",
-      "v": "la caja",
-      "weight": 138.0,
-      "voltaje": 138,
-      "circuito": "El Coco-La Caja"
+      "u": "miravalles",
+      "v": "arenal",
+      "weight": -12.672847811887657,
+      "voltage": 230,
+      "circuit": "Miravalles-Arenal"
     },
     {
-      "u": "naranjo",
-      "v": "la garita",
-      "weight": 138.0,
-      "voltaje": 138,
-      "circuito": "Naranjo-La Garita"
+      "u": "papagayo",
+      "v": "liberia",
+      "weight": -1.5141280209013717,
+      "voltage": 230,
+      "circuit": "Liberia-Papagayo"
     },
     {
-      "u": "lindora",
-      "v": "la garita",
-      "weight": 230.0,
-      "voltaje": 230,
-      "circuito": "Garita-Lindora"
+      "u": "papagayo",
+      "v": "nuevo colon",
+      "weight": 0.77,
+      "voltage": 230,
+      "circuit": "Papagayo-Nuevo Colon"
     },
     {
-      "u": "lindora",
-      "v": "la caja",
-      "weight": 460.0,
-      "voltaje": 230,
-      "circuito": "Lindora-La Caja"
+      "u": "canas",
+      "v": "liberia",
+      "weight": -6.268798171129981,
+      "voltage": 230,
+      "circuit": "Canas-Liberia"
     },
     {
-      "u": "la caja",
-      "v": "la garita",
-      "weight": 138.0,
-      "voltaje": 138,
-      "circuito": "Garita-La Caja"
+      "u": "canas",
+      "v": "corobici",
+      "weight": -9.239340300457219,
+      "voltage": 230,
+      "circuit": "Corobici-Canas"
     },
     {
-      "u": "la caja",
-      "v": "alajuelita",
-      "weight": 138.0,
-      "voltaje": 138,
-      "circuito": "Alajuelita-La Caja"
+      "u": "mogote",
+      "v": "pailas",
+      "weight": -14.086760287393862,
+      "voltage": 230,
+      "circuit": "Mogote-Pailas"
     },
     {
-      "u": "la caja",
-      "v": "escazu",
-      "weight": 138.0,
-      "voltaje": 138,
-      "circuito": "Escazu-La Caja"
+      "u": "pailas",
+      "v": "liberia",
+      "weight": -7.682710646636186,
+      "voltage": 230,
+      "circuit": "Pailas-Liberia"
     },
     {
-      "u": "la caja",
-      "v": "colima",
-      "weight": 138.0,
-      "voltaje": 138,
-      "circuito": "La Caja-Colima"
-    },
-    {
-      "u": "la caja",
-      "v": "heredia",
-      "weight": 138.0,
-      "voltaje": 138,
-      "circuito": "La Caja-Heredia"
-    },
-    {
-      "u": "la caja",
-      "v": "belen",
-      "weight": 230.0,
-      "voltaje": 230,
-      "circuito": "La Caja-Belen2"
-    },
-    {
-      "u": "la caja",
-      "v": "ribera",
-      "weight": 230.0,
-      "voltaje": 230,
-      "circuito": "La Caja-Ribera"
-    },
-    {
-      "u": "la caja",
-      "v": "coyol",
-      "weight": 230.0,
-      "voltaje": 230,
-      "circuito": "Coyol-La Caja"
-    },
-    {
-      "u": "ribera",
-      "v": "belen",
-      "weight": 230.0,
-      "voltaje": 230,
-      "circuito": "Ribera-Belén"
-    },
-    {
-      "u": "heredia",
-      "v": "colima",
-      "weight": 138.0,
-      "voltaje": 138,
-      "circuito": "Heredia-Colima"
+      "u": "corobici",
+      "v": "arenal",
+      "weight": -9.239340300457219,
+      "voltage": 230,
+      "circuit": "Arenal-Corobici"
     }
   ]
 }

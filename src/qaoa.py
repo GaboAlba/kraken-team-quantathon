@@ -274,6 +274,23 @@ class QAOAResult:
         """``H_C`` energy of the most likely bitstring."""
         return self.ch.energy(self.most_likely_bits())
 
+    def approximation_ratio(
+        self, bounds: tuple[float, float] | None = None, expectation: bool = False
+    ) -> float:
+        """Normalized approximation ratio of this solve vs. the exact optimum.
+
+        Rescales the solution energy onto ``[0, 1]`` using the exact spectrum
+        bounds (``1.0`` == optimal). By default it scores the most-likely
+        bitstring's energy; pass ``expectation=True`` to score the expectation
+        value ``<H_C>`` instead. ``bounds`` may be a precomputed
+        ``(min_energy, max_energy)`` pair (from :func:`energy_bounds`) to avoid
+        re-enumerating the spectrum; otherwise it is computed on the fly.
+        """
+        if bounds is None:
+            bounds = energy_bounds(self.ch)
+        e = self.energy if expectation else self.most_likely_energy()
+        return approximation_ratio(e, bounds[0], bounds[1])
+
 
 # --------------------------------------------------------------------------
 # Classical brute-force reference (small n)
@@ -299,6 +316,49 @@ def brute_force_ground_state(
             best_energy = e
             best_bits = list(bits)
     return best_energy, best_bits
+
+
+def energy_bounds(ch: CostHamiltonian, max_qubits: int = 22) -> tuple[float, float]:
+    """Exact ``(min_energy, max_energy)`` of ``H_C`` over all ``2^n`` assignments.
+
+    The minimum is the ground state (best fault-zone partition); the maximum is
+    the worst assignment. Both are needed for the normalized approximation ratio
+    (:func:`approximation_ratio`), which rescales an energy onto ``[0, 1]``.
+    Enumerates the full spectrum, so it is only feasible for small ``n`` (the
+    grid subgraph is <= 12 qubits); raises for ``n > max_qubits``.
+    """
+    if ch.n_qubits > max_qubits:
+        raise ValueError(
+            f"brute force refused for {ch.n_qubits} qubits (> {max_qubits})"
+        )
+    min_energy = math.inf
+    max_energy = -math.inf
+    for bits in product((0, 1), repeat=ch.n_qubits):
+        e = ch.energy(list(bits))
+        if e < min_energy:
+            min_energy = e
+        if e > max_energy:
+            max_energy = e
+    return min_energy, max_energy
+
+
+def approximation_ratio(
+    energy: float, min_energy: float, max_energy: float
+) -> float:
+    """Normalized approximation ratio in ``[0, 1]`` for a *minimization* objective.
+
+    Defined as ``r = (E_max - E) / (E_max - E_min)`` so ``r = 1`` at the ground
+    state ``E_min`` (the optimal partition) and ``r = 0`` at the worst assignment
+    ``E_max``. Higher is better. Unlike the naive ``E / E_min``, this rescaling is
+    robust to the arbitrary sign and offset of the weighted Ising ``H_C``, which
+    is why it is the meaningful way to compare an approximate solver (QAOA) with
+    the classical optimum on the *same* problem. A degenerate spectrum
+    (``E_max == E_min``) returns ``1.0``.
+    """
+    span = max_energy - min_energy
+    if span == 0.0:
+        return 1.0
+    return (max_energy - energy) / span
 
 
 # --------------------------------------------------------------------------
@@ -490,9 +550,17 @@ if __name__ == "__main__":
 
     gs_energy, gs_bits = brute_force_ground_state(ch)
     gs_partition = dict(zip(ch.variables, gs_bits))
+    e_min, e_max = energy_bounds(ch)
     print(f"\nBrute-force optimum: E = {gs_energy:.4f}")
     match = qaoa.most_likely_bits() == gs_bits
     print(f"  QAOA most-likely matches optimum: {match}")
+
+    print("\nApproximation ratio (1.0 == classical optimum, higher is better):")
+    print(f"  most-likely bitstring = {qaoa.approximation_ratio((e_min, e_max)):.4f}")
+    print(
+        "  expectation <H_C>     = "
+        f"{qaoa.approximation_ratio((e_min, e_max), expectation=True):.4f}"
+    )
 
     print("\nMost-likely partition (node -> side):")
     for node, side in partition.items():

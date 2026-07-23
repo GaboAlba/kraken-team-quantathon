@@ -16,6 +16,7 @@ The project pins dependencies in `requirements.txt` and expects a local `.venv`.
   `pytest tests/test_graph.py::test_build_national_graph_basico`.
 - Run the pipeline end-to-end: `python -m src.graph` (writes `data/grid_cr.json`).
 - Build the Max-Cut QUBO: `python -m src.qubo` (reads `data/grid_cr.json`, writes `data/qubo_cr.json`).
+- Run QAOA on the QUBO: `python -m src.qaoa` (reads `data/qubo_cr.json`, prints the best partition vs. the brute-force optimum).
 - Refresh the ICE data snapshot: `python -m src.ice_data`.
 - Regenerate figures: `python -m src.visualize` (writes to `figures/`).
 
@@ -50,6 +51,20 @@ ICE ArcGIS API ──> data/raw/*.geojson ──> national NetworkX graph ──
   registry convention as `weights.SCHEMES`). Emits both QUBO and Ising forms to
   `data/qubo_cr.json` (`to_json` / `save_qubo`); `build()` orchestrates it. Pass
   `maximize_cut=True` (e.g. with `kv`) for the classic max-cut sense.
+- `src/qaoa.py` — Task C. Reads the cost Hamiltonian `H_C` from `data/qubo_cr.json`
+  (or rebuilds it from `data/grid_cr.json`) and runs QAOA in **Guppy 0.21** on the
+  **Selene** emulator, **minimizing** `⟨H_C⟩` (the QUBO is minimize-cut, so the
+  signs are baked in). The weighted phase kernel applies `rz(2γh_i)` per field and
+  `cx; rz(2γJ_ij); cx` per coupling, plus an `rx(2β)` mixer (`build_qaoa_instance`).
+  Two optimizers minimize `⟨H_C⟩`: `solve_naive` (random-sampling baseline) and
+  `solve_scipy` (COBYLA, main path); `build()` orchestrates it and
+  `brute_force_ground_state` gives the exact reference. See `docs/qaoa.md`.
+- `src/qaoa_nexus.py` — **experiment script** (not part of the reproducible pipeline
+  or tests). Reuses the backend-agnostic Guppy kernel from `src/qaoa.py`, compiles it
+  to HUGR, and runs the QAOA variational loop on **Quantinuum Nexus**'s hosted Selene
+  emulator (`qnx.SeleneConfig`) via `solve_scipy_nexus`. A HUGR job returns a
+  `QsysResult`, so energy decoding/plotting is unchanged. Needs network + `qnx.login()`;
+  the actual optimization run lives in `notebooks/nexus_optimization.ipynb`.
 - `src/visualize.py` — renders the national grid and the chosen subregion to PNGs.
 
 Edge weight = how critical a transmission line is to cut for fault-zone

@@ -5,7 +5,7 @@ Pipeline (Task A):
     ICE snapshot (GeoJSON)  ->  national graph (NetworkX)  ->  subgrid  ->  grid_cr.json
 
 - Nodes: substations (``Subestaciones`` layer). Generation plants
-  (``Plantas_NGICE`` layer) within 20 km are attached to each substation node.
+  (``Plantas_NGICE`` layer) within 2 km are attached to each substation node.
 - Edges: transmission lines (``LineasDeTransmision`` layer). Connectivity is
   derived from the ``Circuito`` field with format ``"SubstationA-SubstationB"``.
 - Weight: interchangeable function from ``src.weights`` (default
@@ -167,7 +167,7 @@ def _distance_m(x1: float, y1: float, x2: float, y2: float) -> float:
 def assign_generators(
     G: nx.Graph,
     generators: list[dict],
-    radius_m: float = 10000.0,
+    radius_m: float = 2000.0,
 ) -> nx.Graph:
     """Attach generators within ``radius_m`` of each substation to its node.
 
@@ -225,7 +225,7 @@ def build_national_graph(
     lines_geojson: dict,
     plants_geojson: dict | None = None,
     weight_scheme: str = weights.DEFAULT_SCHEME,
-    radius_m: float = 20000.0,
+    radius_m: float = 2000.0,
 ) -> tuple[nx.Graph, dict]:
     """Build the weighted national graph.
 

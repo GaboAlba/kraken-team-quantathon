@@ -70,6 +70,44 @@ def test_weight_all_schemes_are_positive():
         assert fn(voltage=138, length_m=2500) > 0, name
 
 
+def test_generation_weight_base_without_generators():
+    fn = weights.SCHEMES["generation"]
+    assert fn(voltage=230, length_m=0) == pytest.approx(1 - 0.23)
+
+
+def test_generation_weight_counts_generators_and_both_ends_penalty():
+    fn = weights.SCHEMES["generation"]
+    gens_u = [{"thermal": False}]
+    gens_v = [{"thermal": False}, {"thermal": False}]
+    expected = 1 - 1 - 2 + 0.5 - 230 / 1000
+    assert fn(voltage=230, length_m=0, gens_u=gens_u, gens_v=gens_v) == pytest.approx(expected)
+
+
+def test_generation_weight_does_not_apply_both_ends_penalty_to_one_side():
+    fn = weights.SCHEMES["generation"]
+    gens_u = [{"thermal": False}]
+    expected = 1 - 1 - 230 / 1000
+    assert fn(voltage=230, length_m=0, gens_u=gens_u, gens_v=[]) == pytest.approx(expected)
+
+
+def test_generation_weight_applies_halving_thermal_penalty():
+    fn = weights.SCHEMES["generation"]
+    gens_u = [{"thermal": True}, {"thermal": True}]
+    gens_v = [{"thermal": True}]
+    expected = 1 - 2 - 1 + 0.5 + (0.5 + 0.25 + 0.125) - 230 / 1000
+    assert fn(voltage=230, length_m=0, gens_u=gens_u, gens_v=gens_v) == pytest.approx(expected)
+
+
+def test_generation_weight_adds_normalized_generator_power():
+    fn = weights.SCHEMES["generation"]
+    # Important lines are cheaper: the biggest generator (power_norm == 1.0)
+    # lowers the weight by a full point; a half-size one by 0.5. Non-thermal.
+    gens_u = [{"thermal": False, "power_norm": 1.0}]
+    gens_v = [{"thermal": False, "power_norm": 0.5}]
+    expected = 1 - 1 - 1 - (1.0 + 0.5) + 0.5 - 230 / 1000
+    assert fn(voltage=230, length_m=0, gens_u=gens_u, gens_v=gens_v) == pytest.approx(expected)
+
+
 # --------------------------------------------------------------------------
 # Graph construction with synthetic data
 # --------------------------------------------------------------------------
@@ -94,11 +132,96 @@ def _fake_geojson_lines(circuits_voltages):
     return {"features": feats}
 
 
+def _fake_geojson_plants(plants):
+    feats = []
+    for plant, technology, status, x, y, power_mw in plants:
+        feats.append({
+            "properties": {
+                "Planta": plant,
+                "Tecnologia": technology,
+                "EstAct": status,
+                "XCoord": x,
+                "YCoord": y,
+                "PotenciaEfectivaMW": power_mw,
+            },
+            "geometry": {"type": "Point", "coordinates": [x, y]},
+        })
+    return {"features": feats}
+
+
+def test_is_thermal_handles_accents_case_and_non_thermal_technologies():
+    for technology in ("Térmico", "Térmica", "térmico"):
+        assert graph.is_thermal(technology) is True
+    for technology in ("Geotérmico", "Hidroeléctrico", "Solar", None, ""):
+        assert graph.is_thermal(technology) is False
+
+
+def test_parse_generators_keeps_active_plants_and_projected_coordinates():
+    plants = _fake_geojson_plants([
+        ("Thermal Plant", "Térmico", "Activo", 100.0, 200.0, 10.5),
+        ("Inactive Plant", "Solar", "Inactivo", 300.0, 400.0, 20.0),
+        ("Hydro Plant", "Hidroeléctrico", "Activo", 500.0, 600.0, 30.0),
+    ])
+    generators = graph.parse_generators(plants)
+    assert generators == [
+        {
+            "plant": "Thermal Plant",
+            "technology": "Térmico",
+            "thermal": True,
+            "power_mw": 10.5,
+            "x": 100.0,
+            "y": 200.0,
+        },
+        {
+            "plant": "Hydro Plant",
+            "technology": "Hidroeléctrico",
+            "thermal": False,
+            "power_mw": 30.0,
+            "x": 500.0,
+            "y": 600.0,
+        },
+    ]
+
+
+def test_distance_m_uses_euclidean_distance():
+    assert graph._distance_m(0, 0, 3, 4) == pytest.approx(5)
+
+
+def test_assign_generators_respects_radius_and_sorts_by_distance():
+    G = nx.Graph()
+    G.add_node("substation", px=0.0, py=0.0, border=False)
+    G.add_node("border", px=None, py=None, border=True)
+    G.add_node("no_coord", px=None, py=0.0, border=False)
+    generators = [
+        {"plant": "Far Plant", "technology": "Solar", "thermal": False,
+         "power_mw": 3.0, "x": 25000.0, "y": 0.0},
+        {"plant": "Plant B", "technology": "Solar", "thermal": False,
+         "power_mw": 2.0, "x": 1000.0, "y": 0.0},
+        {"plant": "Plant A", "technology": "Térmico", "thermal": True,
+         "power_mw": 1.0, "x": 500.0, "y": 0.0},
+    ]
+
+    graph.assign_generators(G, generators, radius_m=20000.0)
+
+    assert G.nodes["substation"]["n_generators"] == 2
+    assert G.nodes["substation"]["n_thermal"] == 1
+    assert [g["plant"] for g in G.nodes["substation"]["generators"]] == ["Plant A", "Plant B"]
+    assert [g["dist_m"] for g in G.nodes["substation"]["generators"]] == [500.0, 1000.0]
+    # Far Plant (3 MW) is out of radius, so the biggest attached generator is
+    # Plant B (2 MW): it scores 1.0 and Plant A (1 MW) scores 0.5.
+    assert G.graph["max_generator_power_mw"] == 2.0
+    norms = {g["plant"]: g["power_norm"] for g in G.nodes["substation"]["generators"]}
+    assert norms == {"Plant A": pytest.approx(0.5), "Plant B": pytest.approx(1.0)}
+    assert G.nodes["border"]["generators"] == []
+    assert G.nodes["border"]["n_generators"] == 0
+    assert G.nodes["no_coord"]["generators"] == []
+
+
 def test_build_national_graph_basic():
     subs = _fake_geojson_subs([("Liberia", "Guanacaste"), ("Papagayo", "Guanacaste"),
                                ("Canas", "Guanacaste")])
     lines = _fake_geojson_lines([("Liberia-Papagayo", 230), ("Canas-Liberia", 138)])
-    G, report = graph.build_national_graph(subs, lines)
+    G, report = graph.build_national_graph(subs, lines, weight_scheme="kv")
     assert set(G.nodes) == {"liberia", "papagayo", "canas"}
     assert G.number_of_edges() == 2
     assert G["liberia"]["papagayo"]["weight"] == 230
@@ -108,9 +231,56 @@ def test_build_national_graph_basic():
 def test_parallel_lines_are_collapsed_summing_weight():
     subs = _fake_geojson_subs([("Liberia", "Guanacaste"), ("Papagayo", "Guanacaste")])
     lines = _fake_geojson_lines([("Liberia-Papagayo", 230), ("Liberia-Papagayo", 230)])
-    G, _ = graph.build_national_graph(subs, lines)
+    G, _ = graph.build_national_graph(subs, lines, weight_scheme="kv")
     assert G.number_of_edges() == 1
     assert G["liberia"]["papagayo"]["weight"] == 460
+
+
+def test_build_national_graph_with_plants_uses_generation_weight():
+    subs = {
+        "features": [
+            {
+                "properties": {
+                    "Subestacio": "Alpha",
+                    "Provincia": "G",
+                    "Canton": "X",
+                    "PuntoX": 0.0,
+                    "PuntoY": 0.0,
+                },
+                "geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+            },
+            {
+                "properties": {
+                    "Subestacio": "Beta",
+                    "Provincia": "G",
+                    "Canton": "X",
+                    "PuntoX": 30000.0,
+                    "PuntoY": 0.0,
+                },
+                "geometry": {"type": "Point", "coordinates": [1.0, 1.0]},
+            },
+        ]
+    }
+    lines = _fake_geojson_lines([("Alpha-Beta", 230)])
+    plants = _fake_geojson_plants([
+        ("Hydro Near Alpha", "Hidroeléctrico", "Activo", 1000.0, 0.0, 5.0),
+        ("Thermal Near Beta", "Térmico", "Activo", 31000.0, 0.0, 6.0),
+        ("Far Solar", "Solar", "Activo", 51000.0, 0.0, 7.0),
+    ])
+
+    G, _ = graph.build_national_graph(subs, lines, plants_geojson=plants)
+
+    assert G.nodes["alpha"]["n_generators"] == 1
+    assert G.nodes["beta"]["n_generators"] == 1
+    assert G.nodes["beta"]["n_thermal"] == 1
+    # Biggest attached generator is the 6 MW thermal one (Far Solar is out of
+    # radius), so it scores 1.0 and the 5 MW hydro scores 5/6.
+    assert G.graph["max_generator_power_mw"] == 6.0
+    expected = 1 - 1 - 1 - (5 / 6 + 1.0) + 0.5 + 0.5 - 230 / 1000
+    assert G["alpha"]["beta"]["weight"] == pytest.approx(expected)
+    doc = graph.to_json(G)
+    node = next(n for n in doc["nodes"] if n["id"] == "alpha")
+    assert {"generators", "n_generators", "n_thermal"} <= set(node)
 
 
 def test_unrecognized_endpoint_is_marked_as_border():
@@ -165,6 +335,11 @@ def test_to_json_structure(tmp_path):
     assert doc["metadata"]["region"] == "Guanacaste"
     assert len(doc["nodes"]) == 2
     assert len(doc["edges"]) == 1
+    n = doc["nodes"][0]
+    assert {
+        "id", "name", "province", "canton", "x", "y", "border",
+        "generators", "n_generators", "n_thermal",
+    } <= set(n)
     e = doc["edges"][0]
     assert {"u", "v", "weight", "voltage", "circuit"} <= set(e)
 
@@ -175,7 +350,9 @@ def test_to_json_structure(tmp_path):
 
 RAW = ROOT / "data" / "raw"
 has_snapshot = (RAW / "substations.geojson").exists() and (RAW / "lines.geojson").exists()
+has_plants = has_snapshot and (RAW / "plants.geojson").exists()
 real = pytest.mark.skipif(not has_snapshot, reason="ICE snapshot not available")
+real_with_plants = pytest.mark.skipif(not has_plants, reason="ICE plants snapshot not available")
 
 
 @real
@@ -200,6 +377,17 @@ def test_real_snapshot_guanacaste_subgrid_is_valid():
     assert 6 <= sub.number_of_nodes() <= 12
     assert nx.is_connected(sub)
     assert sub.number_of_edges() >= sub.number_of_nodes() - 1
+
+
+@real_with_plants
+def test_real_snapshot_with_plants_assigns_generators():
+    import json
+    subs = json.loads((RAW / "substations.geojson").read_text(encoding="utf-8"))
+    lines = json.loads((RAW / "lines.geojson").read_text(encoding="utf-8"))
+    plants = json.loads((RAW / "plants.geojson").read_text(encoding="utf-8"))
+    G, _ = graph.build_national_graph(subs, lines, plants_geojson=plants)
+    real_nodes = [d for _, d in G.nodes(data=True) if not d["border"]]
+    assert any(d["n_generators"] > 0 for d in real_nodes)
 
 
 @real

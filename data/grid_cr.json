@@ -33,51 +33,6 @@
   },
   "nodes": [
     {
-      "id": "liberia",
-      "name": "Liberia",
-      "province": "Guanacaste",
-      "canton": "Liberia",
-      "x": -85.44574374991,
-      "y": 10.6153551397224,
-      "border": false,
-      "generators": [],
-      "n_generators": 0,
-      "n_thermal": 0
-    },
-    {
-      "id": "arenal",
-      "name": "Arenal",
-      "province": "Guanacaste",
-      "canton": "Tilaran",
-      "x": -85.0002881841908,
-      "y": 10.4727301596314,
-      "border": false,
-      "generators": [
-        {
-          "plant": "Arenal",
-          "technology": "Hidroeléctrico",
-          "thermal": false,
-          "power_mw": 166,
-          "dist_m": 338.0,
-          "power_norm": 0.5421293272371
-        }
-      ],
-      "n_generators": 1,
-      "n_thermal": 0
-    },
-    {
-      "id": "papagayo",
-      "name": "Papagayo",
-      "province": "Guanacaste",
-      "canton": "Liberia",
-      "x": -85.6055963931614,
-      "y": 10.6637018567001,
-      "border": false,
-      "generators": [],
-      "n_generators": 0,
-      "n_thermal": 0
-    },
-    {
       "id": "pailas",
       "name": "Pailas",
       "province": "Guanacaste",
@@ -107,6 +62,18 @@
       "n_thermal": 0
     },
     {
+      "id": "canas",
+      "name": "Cañas",
+      "province": "Guanacaste",
+      "canton": "Cañas",
+      "x": -85.1236323586436,
+      "y": 10.4234985773189,
+      "border": false,
+      "generators": [],
+      "n_generators": 0,
+      "n_thermal": 0
+    },
+    {
       "id": "corobici",
       "name": "Corobici",
       "province": "Guanacaste",
@@ -125,6 +92,54 @@
         }
       ],
       "n_generators": 1,
+      "n_thermal": 0
+    },
+    {
+      "id": "liberia",
+      "name": "Liberia",
+      "province": "Guanacaste",
+      "canton": "Liberia",
+      "x": -85.44574374991,
+      "y": 10.6153551397224,
+      "border": false,
+      "generators": [],
+      "n_generators": 0,
+      "n_thermal": 0
+    },
+    {
+      "id": "nuevo colon",
+      "name": "Nuevo Colon",
+      "province": "Guanacaste",
+      "canton": "Carrillo",
+      "x": -85.7149104775674,
+      "y": 10.5072195364139,
+      "border": false,
+      "generators": [],
+      "n_generators": 0,
+      "n_thermal": 0
+    },
+    {
+      "id": "mogote",
+      "name": "Mogote",
+      "province": "Guanacaste",
+      "canton": "Bagaces",
+      "x": -85.267612029714,
+      "y": 10.725715627784,
+      "border": false,
+      "generators": [],
+      "n_generators": 0,
+      "n_thermal": 0
+    },
+    {
+      "id": "papagayo",
+      "name": "Papagayo",
+      "province": "Guanacaste",
+      "canton": "Liberia",
+      "x": -85.6055963931614,
+      "y": 10.6637018567001,
+      "border": false,
+      "generators": [],
+      "n_generators": 0,
       "n_thermal": 0
     },
     {
@@ -165,84 +180,34 @@
       "n_thermal": 0
     },
     {
-      "id": "nuevo colon",
-      "name": "Nuevo Colon",
+      "id": "arenal",
+      "name": "Arenal",
       "province": "Guanacaste",
-      "canton": "Carrillo",
-      "x": -85.7149104775674,
-      "y": 10.5072195364139,
+      "canton": "Tilaran",
+      "x": -85.0002881841908,
+      "y": 10.4727301596314,
       "border": false,
-      "generators": [],
-      "n_generators": 0,
-      "n_thermal": 0
-    },
-    {
-      "id": "mogote",
-      "name": "Mogote",
-      "province": "Guanacaste",
-      "canton": "Bagaces",
-      "x": -85.267612029714,
-      "y": 10.725715627784,
-      "border": false,
-      "generators": [],
-      "n_generators": 0,
-      "n_thermal": 0
-    },
-    {
-      "id": "canas",
-      "name": "Cañas",
-      "province": "Guanacaste",
-      "canton": "Cañas",
-      "x": -85.1236323586436,
-      "y": 10.4234985773189,
-      "border": false,
-      "generators": [],
-      "n_generators": 0,
+      "generators": [
+        {
+          "plant": "Arenal",
+          "technology": "Hidroeléctrico",
+          "thermal": false,
+          "power_mw": 166,
+          "dist_m": 338.0,
+          "power_norm": 0.5421293272371
+        }
+      ],
+      "n_generators": 1,
       "n_thermal": 0
     }
   ],
   "edges": [
     {
-      "u": "liberia",
-      "v": "papagayo",
-      "weight": -0.77,
-      "voltage": 230,
-      "circuit": "Liberia-Papagayo"
-    },
-    {
-      "u": "liberia",
-      "v": "canas",
-      "weight": -0.77,
-      "voltage": 230,
-      "circuit": "Canas-Liberia"
-    },
-    {
-      "u": "liberia",
-      "v": "pailas",
+      "u": "pailas",
+      "v": "liberia",
       "weight": 1.5141280209013717,
       "voltage": 230,
       "circuit": "Pailas-Liberia"
-    },
-    {
-      "u": "arenal",
-      "v": "corobici",
-      "weight": 1.8404180274330502,
-      "voltage": 230,
-      "circuit": "Arenal-Corobici"
-    },
-    {
-      "u": "arenal",
-      "v": "miravalles",
-      "weight": 3.5683409536250816,
-      "voltage": 230,
-      "circuit": "Miravalles-Arenal"
-    },
-    {
-      "u": "papagayo",
-      "v": "nuevo colon",
-      "weight": -0.77,
-      "voltage": 230,
-      "circuit": "Papagayo-Nuevo Colon"
     },
     {
       "u": "pailas",
@@ -252,18 +217,53 @@
       "circuit": "Mogote-Pailas"
     },
     {
-      "u": "corobici",
-      "v": "canas",
+      "u": "canas",
+      "v": "liberia",
+      "weight": -0.77,
+      "voltage": 230,
+      "circuit": "Canas-Liberia"
+    },
+    {
+      "u": "canas",
+      "v": "corobici",
       "weight": 0.7982887001959503,
       "voltage": 230,
       "circuit": "Corobici-Canas"
     },
     {
-      "u": "miravalles",
-      "v": "mogote",
+      "u": "corobici",
+      "v": "arenal",
+      "weight": 1.8404180274330502,
+      "voltage": 230,
+      "circuit": "Arenal-Corobici"
+    },
+    {
+      "u": "liberia",
+      "v": "papagayo",
+      "weight": -0.77,
+      "voltage": 230,
+      "circuit": "Liberia-Papagayo"
+    },
+    {
+      "u": "nuevo colon",
+      "v": "papagayo",
+      "weight": -0.77,
+      "voltage": 230,
+      "circuit": "Papagayo-Nuevo Colon"
+    },
+    {
+      "u": "mogote",
+      "v": "miravalles",
       "weight": 2.526211626387982,
       "voltage": 230,
       "circuit": "Miravalles-Mogote"
+    },
+    {
+      "u": "miravalles",
+      "v": "arenal",
+      "weight": 3.5683409536250816,
+      "voltage": 230,
+      "circuit": "Miravalles-Arenal"
     }
   ]
 }

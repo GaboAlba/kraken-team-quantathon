@@ -221,6 +221,26 @@ def test_assign_generators_respects_radius_and_sorts_by_distance():
     assert G.nodes["no_coord"]["generators"] == []
 
 
+def test_assign_generators_default_radius_is_2km():
+    G = nx.Graph()
+    G.add_node("substation", px=0.0, py=0.0, border=False)
+    generators = [
+        {"plant": "Near Plant", "technology": "Hidroeléctrico", "thermal": False,
+         "power_mw": 5.0, "x": 1500.0, "y": 0.0},
+        {"plant": "Just Outside", "technology": "Hidroeléctrico", "thermal": False,
+         "power_mw": 9.0, "x": 2500.0, "y": 0.0},
+    ]
+    graph.assign_generators(G, generators)   # default radius: plants co-located only
+    assert [g["plant"] for g in G.nodes["substation"]["generators"]] == ["Near Plant"]
+    assert G.nodes["substation"]["n_generators"] == 1
+
+
+def test_default_generator_radius_is_2km_everywhere():
+    import inspect
+    assert inspect.signature(graph.assign_generators).parameters["radius_m"].default == 2000.0
+    assert inspect.signature(graph.build_national_graph).parameters["radius_m"].default == 2000.0
+
+
 def test_build_national_graph_basic():
     subs = _fake_geojson_subs([("Liberia", "Guanacaste"), ("Papagayo", "Guanacaste"),
                                ("Canas", "Guanacaste")])

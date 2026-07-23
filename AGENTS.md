@@ -15,6 +15,7 @@ The project pins dependencies in `requirements.txt` and expects a local `.venv`.
 - Run a single test file / test: `pytest tests/test_graph.py`,
   `pytest tests/test_graph.py::test_build_national_graph_basico`.
 - Run the pipeline end-to-end: `python -m src.graph` (writes `data/grid_cr.json`).
+- Build the Max-Cut QUBO: `python -m src.qubo` (reads `data/grid_cr.json`, writes `data/qubo_cr.json`).
 - Refresh the ICE data snapshot: `python -m src.ice_data`.
 - Regenerate figures: `python -m src.visualize` (writes to `figures/`).
 
@@ -40,6 +41,15 @@ ICE ArcGIS API ──> data/raw/*.geojson ──> national NetworkX graph ──
   (`extract_subregion`, default ≤12 nodes), and serializes to `grid_cr.json`
   (`to_json` / `save_graph`). `build()` orchestrates the whole flow.
 - `src/weights.py` — interchangeable edge-weight schemes; see conventions below.
+- `src/qubo.py` — Task B. Reads `data/grid_cr.json`, recomputes edge weights with
+  the `generation_inverted` scheme (sign-inverted generation weights: critical
+  lines become the largest positive), and builds the QUBO (`build_qubo`) with a
+  **minimize-cut** objective so the fault-zone boundary avoids critical lines,
+  plus a quadratic **generator-spread** penalty (keeps generators on both sides
+  of the cut) and a **balance** penalty, registered in `qubo.PENALTIES` (same
+  registry convention as `weights.SCHEMES`). Emits both QUBO and Ising forms to
+  `data/qubo_cr.json` (`to_json` / `save_qubo`); `build()` orchestrates it. Pass
+  `maximize_cut=True` (e.g. with `kv`) for the classic max-cut sense.
 - `src/visualize.py` — renders the national grid and the chosen subregion to PNGs.
 
 Edge weight = how critical a transmission line is to cut for fault-zone
@@ -58,8 +68,9 @@ skill before writing code against that library.
 - **Language: English only.** Write everything in English — docstrings, comments,
   identifiers, and JSON/metadata keys — so the code is readable by anyone.
 - **Weight schemes are a registry:** every scheme is a pure function
-  `fn(voltage, length_m) -> float` (positive), registered in `weights.SCHEMES` with
-  a string key; `weights.DEFAULT_SCHEME` selects the default (`"kv"`). Add new
+  `fn(voltage, length_m, gens_u=(), gens_v=()) -> float`, registered in
+  `weights.SCHEMES` with a string key; `weights.DEFAULT_SCHEME` selects the
+  default (`"generation_inverted"`, generator-aware and mostly positive). Add new
   schemes by adding a function and a `SCHEMES` entry — don't hardcode weights elsewhere.
 - **Reproducibility & determinism:** the pipeline only reads the static snapshot;
   subregion selection uses deterministic tie-breaks (alphabetical node order, BFS

@@ -7,8 +7,9 @@ line is for the fault-zone partition.
 All schemes are functions ``fn(voltage, length_m, gens_u=(), gens_v=()) ->
 float`` registered in ``SCHEMES``. ``gens_u``/``gens_v`` are the generator
 lists attached to the edge endpoints (see ``graph.assign_generators``); the
-voltage-only schemes ignore them. The default scheme is ``generation``
-(generator-aware), documented and justified in ``Docs/desiciones.md``.
+voltage-only schemes ignore them. The default scheme is ``generation_inverted``
+(generator-aware; the sign-inverted ``generation`` weight, so critical lines
+score highest and positive), documented in ``docs/qubo.md``.
 """
 
 from __future__ import annotations
@@ -91,11 +92,26 @@ def _generation(voltage: float, length_m: float, gens_u: Sequence = (),
     return weight
 
 
+def _generation_inverted(voltage: float, length_m: float, gens_u: Sequence = (),
+                         gens_v: Sequence = ()) -> float:
+    """Sign-inverted ``generation`` weight (``-_generation``).
+
+    The ``generation`` weights are mostly negative, with the *most critical*
+    lines being the most negative. Negating them makes the weights mostly
+    *positive*, with the most critical lines scoring the *highest*. This is meant
+    for a **minimize-cut** QUBO objective: minimizing the total weight of the cut
+    lines makes the fault-zone boundary avoid the high-weight (critical) lines
+    and settle on the cheapest (least critical) ones. See ``docs/qubo.md``.
+    """
+    return -_generation(voltage, length_m, gens_u, gens_v)
+
+
 SCHEMES = {
     "kv": _kv,
     "kv_normalized": _kv_normalized,
     "kv_over_length": _kv_over_length,
     "generation": _generation,
+    "generation_inverted": _generation_inverted,
 }
 
-DEFAULT_SCHEME = "generation"
+DEFAULT_SCHEME = "generation_inverted"

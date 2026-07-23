@@ -140,6 +140,78 @@ def plot_subgraph(sub: nx.Graph, out: Path,
     return out
 
 
+# Partition colors (fault-zone side 0 / 1) for the QAOA result.
+PART_COLOR = {0: "#1f77b4", 1: "#d62728"}  # blue / red
+CUT_COLOR = "#ff7f0e"  # highlighted cut lines
+
+
+def plot_partition(sub: nx.Graph, partition: dict, out: Path,
+                   label: str = "QAOA fault-zone partition",
+                   cut_value: float | None = None) -> Path:
+    """Plot the subgrid painted by a QAOA partition.
+
+    ``partition`` maps each node id to its fault-zone side ``{0, 1}``. Nodes are
+    colored by side, edges whose endpoints fall on *different* sides (the cut
+    lines) are highlighted and dashed, and generator nodes are ringed. When
+    ``cut_value`` is omitted it is computed as the total ``weight`` of the cut
+    edges.
+    """
+    pos = _positions(sub)
+    if len(pos) < sub.number_of_nodes():
+        pos = nx.spring_layout(sub, seed=42, weight="weight")
+
+    cut_edges = [(u, v) for u, v in sub.edges()
+                 if partition.get(u) != partition.get(v)]
+    kept_edges = [(u, v) for u, v in sub.edges()
+                  if partition.get(u) == partition.get(v)]
+    if cut_value is None:
+        cut_value = sum(sub[u][v].get("weight", 0.0) for u, v in cut_edges)
+
+    fig, ax = plt.subplots(figsize=(10, 9))
+
+    nx.draw_networkx_edges(sub, pos, edgelist=kept_edges, ax=ax,
+                           edge_color="#bbbbbb", width=1.8, alpha=0.8)
+    nx.draw_networkx_edges(sub, pos, edgelist=cut_edges, ax=ax,
+                           edge_color=CUT_COLOR, width=2.6, style="dashed")
+
+    for side, color in PART_COLOR.items():
+        nodes = [n for n in sub.nodes if partition.get(n) == side]
+        if nodes:
+            nx.draw_networkx_nodes(sub, pos, nodelist=nodes, ax=ax,
+                                   node_size=650, node_color=color,
+                                   edgecolors="black", linewidths=0.8,
+                                   label=f"Zone {side}")
+
+    gens = [n for n, d in sub.nodes(data=True) if d.get("n_generators", 0) > 0]
+    if gens:
+        nx.draw_networkx_nodes(sub, pos, nodelist=gens, ax=ax, node_size=980,
+                               node_color="none", edgecolors="#ffbf00",
+                               linewidths=1.6)
+        ax.plot([], [], marker="o", mfc="none", mec="#ffbf00", ls="none",
+                label="Generation")
+
+    labels = {n: d.get("name", n) for n, d in sub.nodes(data=True)}
+    nx.draw_networkx_labels(sub, pos, labels, ax=ax, font_size=8,
+                            font_color="white")
+    edge_labels = {(u, v): f"{d['weight']:.1f}"
+                   for u, v, d in sub.edges(data=True)}
+    nx.draw_networkx_edge_labels(sub, pos, edge_labels, ax=ax, font_size=7,
+                                 label_pos=0.5, bbox=dict(boxstyle="round,pad=0.15",
+                                 fc="white", ec="none", alpha=0.7))
+
+    ax.plot([], [], color=CUT_COLOR, lw=2.6, ls="dashed", label="Cut line")
+    ax.set_title(f"{label}\n{len(cut_edges)} cut lines · "
+                 f"cut weight = {cut_value:.1f}", fontsize=13)
+    ax.legend(loc="best", framealpha=0.9)
+    ax.axis("off")
+    fig.tight_layout()
+
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+    return out
+
+
 def main() -> None:
     subs = json.loads((RAW_DIR / "substations.geojson").read_text(encoding="utf-8"))
     lines = json.loads((RAW_DIR / "lines.geojson").read_text(encoding="utf-8"))

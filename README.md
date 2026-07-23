@@ -13,6 +13,9 @@ We are solving Challenge #1
 * [QUBO / Max-Cut formulation (Task B)](docs/qubo.md) — design decisions behind
   `src/qubo.py`: the cut objective (minimize-cut), the sign-inverted
   `generation` weight scheme, and the generator-spread and balance penalties.
+* [QAOA solver (Task C)](docs/qaoa.md) — design decisions behind `src/qaoa.py`:
+  what is fixed by the Graph + QUBO vs. the QAOA hyperparameters, the weighted
+  Guppy 0.21 phase/mixer kernel, and the naive + SciPy (COBYLA) optimizers.
 
 ## Setup
 

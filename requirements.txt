@@ -3,11 +3,13 @@ pytket
 guppylang
 
 # Scientific computing / optimization
+numpy
 scipy
 optax
 cvxpy
 networkx
 matplotlib
+scs
 
 # Testing
 pytest

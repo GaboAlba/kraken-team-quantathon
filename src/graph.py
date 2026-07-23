@@ -245,6 +245,28 @@ def to_json(G: nx.Graph, metadata: dict | None = None) -> dict:
     return {"metadata": metadata or {}, "nodes": nodes, "edges": edges}
 
 
+def load_graph(path: Path) -> nx.Graph:
+    """Carga un grafo serializado en el formato de ``grid_cr.json``."""
+    import json
+
+    data = json.loads(path.read_text(encoding="utf-8"))
+    G = nx.Graph()
+    for node in data.get("nodes", []):
+        G.add_node(node["id"],
+                   nombre=node.get("nombre"),
+                   provincia=node.get("provincia"),
+                   canton=node.get("canton"),
+                   x=node.get("x"),
+                   y=node.get("y"),
+                   frontera=node.get("frontera", False))
+    for edge in data.get("edges", []):
+        G.add_edge(edge["u"], edge["v"],
+                   weight=edge.get("weight", 1.0),
+                   voltaje=edge.get("voltaje"),
+                   circuito=edge.get("circuito"))
+    return G
+
+
 def save_graph(G: nx.Graph, path: Path, metadata: dict | None = None) -> Path:
     """Escribe el grafo a disco en formato JSON."""
     path = Path(path)

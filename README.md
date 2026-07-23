@@ -56,8 +56,11 @@ When you need a new package, install it inside the activated venv, then add it t
 
 * [`pytket`](https://tket.quantinuum.com/) — quantum SDK / circuit compilation
 * [`guppylang`](https://github.com/CQCL/guppylang) — quantum programming language (Guppy)
+* [`numpy`](https://numpy.org/) — numerical arrays and scientific computing
 * [`scipy`](https://scipy.org/) — scientific computing
 * [`optax`](https://optax.readthedocs.io/) — gradient-based optimization
 * [`cvxpy`](https://www.cvxpy.org/) — convex optimization
 * [`networkx`](https://networkx.org/) — graph algorithms
+* [`matplotlib`](https://matplotlib.org/) — plotting and visualization
+* [`pytest`](https://pytest.org/) — testing framework
 

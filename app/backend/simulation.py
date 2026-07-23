@@ -229,5 +229,9 @@ class RunManager:
         except Exception as exc:                           # noqa: BLE001
             self._log(run, f"Run failed: {exc}")
             with self._lock:
+                for s in run["stages"]:
+                    if s["state"] == "running":
+                        s["state"] = "error"
+                        s["detail"] = str(exc)[:120]
                 run["status"] = "error"
                 run["results"] = results

@@ -62,3 +62,16 @@ def test_failed_quantum_still_reports_classical():
     assert states["goemans_williamson"] == "done"
     assert run["results"]["methods"]["qaoa"] is None
     assert run["results"]["methods"]["greedy"]["best_energy"] is not None
+
+
+def test_classical_stage_failure_marks_stage_error(monkeypatch):
+    monkeypatch.setattr(simulation, "optimize_angles",
+                        lambda energies: (_ for _ in ()).throw(RuntimeError("boom")))
+    mgr = simulation.RunManager()
+    run_id = mgr.launch(list(grid_service.INITIAL_NODES), shots=5,
+                        quantum_runner=fake_quantum)
+    run = _wait(mgr, run_id)
+    assert run["status"] == "error"
+    states = {s["name"]: s["state"] for s in run["stages"]}
+    assert states["qaoa_angles"] == "error"
+    assert states["goemans_williamson"] == "done"

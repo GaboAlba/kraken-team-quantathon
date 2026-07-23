@@ -72,21 +72,21 @@ def test_weight_all_schemes_are_positive():
 
 def test_generation_weight_base_without_generators():
     fn = weights.SCHEMES["generation"]
-    assert fn(voltage=230, length_m=0) == pytest.approx(1.23)
+    assert fn(voltage=230, length_m=0) == pytest.approx(1 - 0.23)
 
 
 def test_generation_weight_counts_generators_and_both_ends_penalty():
     fn = weights.SCHEMES["generation"]
     gens_u = [{"thermal": False}]
     gens_v = [{"thermal": False}, {"thermal": False}]
-    expected = 1 + 1 + 2 - 0.5 + 230 / 1000
+    expected = 1 - 1 - 2 + 0.5 - 230 / 1000
     assert fn(voltage=230, length_m=0, gens_u=gens_u, gens_v=gens_v) == pytest.approx(expected)
 
 
 def test_generation_weight_does_not_apply_both_ends_penalty_to_one_side():
     fn = weights.SCHEMES["generation"]
     gens_u = [{"thermal": False}]
-    expected = 1 + 1 + 230 / 1000
+    expected = 1 - 1 - 230 / 1000
     assert fn(voltage=230, length_m=0, gens_u=gens_u, gens_v=[]) == pytest.approx(expected)
 
 
@@ -94,7 +94,17 @@ def test_generation_weight_applies_halving_thermal_penalty():
     fn = weights.SCHEMES["generation"]
     gens_u = [{"thermal": True}, {"thermal": True}]
     gens_v = [{"thermal": True}]
-    expected = 1 + 2 + 1 - 0.5 - (0.5 + 0.25 + 0.125) + 230 / 1000
+    expected = 1 - 2 - 1 + 0.5 + (0.5 + 0.25 + 0.125) - 230 / 1000
+    assert fn(voltage=230, length_m=0, gens_u=gens_u, gens_v=gens_v) == pytest.approx(expected)
+
+
+def test_generation_weight_adds_normalized_generator_power():
+    fn = weights.SCHEMES["generation"]
+    # Important lines are cheaper: the biggest generator (power_norm == 1.0)
+    # lowers the weight by a full point; a half-size one by 0.5. Non-thermal.
+    gens_u = [{"thermal": False, "power_norm": 1.0}]
+    gens_v = [{"thermal": False, "power_norm": 0.5}]
+    expected = 1 - 1 - 1 - (1.0 + 0.5) + 0.5 - 230 / 1000
     assert fn(voltage=230, length_m=0, gens_u=gens_u, gens_v=gens_v) == pytest.approx(expected)
 
 
@@ -197,6 +207,11 @@ def test_assign_generators_respects_radius_and_sorts_by_distance():
     assert G.nodes["substation"]["n_thermal"] == 1
     assert [g["plant"] for g in G.nodes["substation"]["generators"]] == ["Plant A", "Plant B"]
     assert [g["dist_m"] for g in G.nodes["substation"]["generators"]] == [500.0, 1000.0]
+    # Far Plant (3 MW) is out of radius, so the biggest attached generator is
+    # Plant B (2 MW): it scores 1.0 and Plant A (1 MW) scores 0.5.
+    assert G.graph["max_generator_power_mw"] == 2.0
+    norms = {g["plant"]: g["power_norm"] for g in G.nodes["substation"]["generators"]}
+    assert norms == {"Plant A": pytest.approx(0.5), "Plant B": pytest.approx(1.0)}
     assert G.nodes["border"]["generators"] == []
     assert G.nodes["border"]["n_generators"] == 0
     assert G.nodes["no_coord"]["generators"] == []
@@ -258,7 +273,10 @@ def test_build_national_graph_with_plants_uses_generation_weight():
     assert G.nodes["alpha"]["n_generators"] == 1
     assert G.nodes["beta"]["n_generators"] == 1
     assert G.nodes["beta"]["n_thermal"] == 1
-    expected = 1 + 1 + 1 - 0.5 - 0.5 + 230 / 1000
+    # Biggest attached generator is the 6 MW thermal one (Far Solar is out of
+    # radius), so it scores 1.0 and the 5 MW hydro scores 5/6.
+    assert G.graph["max_generator_power_mw"] == 6.0
+    expected = 1 - 1 - 1 - (5 / 6 + 1.0) + 0.5 + 0.5 - 230 / 1000
     assert G["alpha"]["beta"]["weight"] == pytest.approx(expected)
     doc = graph.to_json(G)
     node = next(n for n in doc["nodes"] if n["id"] == "alpha")

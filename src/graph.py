@@ -173,10 +173,15 @@ def assign_generators(
 
     Populates three node attributes on every node:
       - ``generators``: list of ``{plant, technology, thermal, power_mw,
-        dist_m}`` for plants within the radius, sorted by ``(dist_m, plant)``
-        for determinism;
+        power_norm, dist_m}`` for plants within the radius, sorted by
+        ``(dist_m, plant)`` for determinism;
       - ``n_generators``: number of associated generators;
       - ``n_thermal``: number of associated fossil-thermal generators.
+
+    ``power_norm`` is the generator's ``power_mw`` divided by the largest
+    ``power_mw`` among all generators attached anywhere in the graph, so the
+    single biggest generator scores 1.0 and the rest score proportionally. The
+    graph-global maximum is stored on ``G.graph['max_generator_power_mw']``.
 
     Border nodes and substations without projected coordinates receive empty
     lists. Mutates and returns ``G``.
@@ -199,6 +204,19 @@ def assign_generators(
         d["generators"] = nearby
         d["n_generators"] = len(nearby)
         d["n_thermal"] = sum(1 for g in nearby if g["thermal"])
+
+    # Normalize generator sizes by the biggest generator attached to the graph
+    # so the largest one contributes 1.0 to the weight and the rest scale down.
+    powers = [g["power_mw"] for _, d in G.nodes(data=True)
+              for g in d["generators"]
+              if g["power_mw"] is not None and g["power_mw"] > 0]
+    max_power = max(powers) if powers else 0.0
+    G.graph["max_generator_power_mw"] = max_power
+    for _, d in G.nodes(data=True):
+        for g in d["generators"]:
+            power = g["power_mw"]
+            g["power_norm"] = (float(power) / max_power
+                               if max_power > 0 and power else 0.0)
     return G
 
 
@@ -415,6 +433,7 @@ def build(
         "download_date": source_info.get("download_date"),
         "build_date": date.today().isoformat(),
         "weight_scheme": weight_scheme,
+        "max_generator_power_mw": G.graph.get("max_generator_power_mw"),
         "region": region if region is not None else label,
         "selection_mode": "nodes" if nodes else ("province" if region else "connectivity"),
         "max_nodes": max_nodes,

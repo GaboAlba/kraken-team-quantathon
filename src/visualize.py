@@ -15,11 +15,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Iterable
 
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from src import graph
+from src import classical_baselines, graph
 
 ROOT = Path(__file__).resolve().parent.parent
 RAW_DIR = ROOT / "data" / "raw"
@@ -127,6 +128,52 @@ def plot_subgraph(sub: nx.Graph, out: Path) -> Path:
     return out
 
 
+def plot_result_bars(results: dict[str, float], out: Path) -> Path:
+    """Grafica una comparación clara de valores de corte entre algoritmos."""
+    fig, ax = plt.subplots(figsize=(9, 5))
+    names = list(results.keys())
+    values = [results[name] for name in names]
+    colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"]
+
+    ax.barh(names, values, color=colors[: len(names)], edgecolor="#333333", alpha=0.9)
+    ax.set_xlabel("Valor de Max-Cut")
+    ax.set_title("Comparación de algoritmos clásicos para Max-Cut")
+    ax.grid(axis="x", linestyle=":", alpha=0.5)
+    for i, value in enumerate(values):
+        ax.text(value + max(values) * 0.01, i, f"{value:.2f}", va="center", fontsize=10)
+
+    fig.tight_layout()
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+    return out
+
+
+def plot_cut_partition(G: nx.Graph, partition: dict[str, int], out: Path) -> Path:
+    """Grafica el corte para una partición de Max-Cut usando un diseño claro."""
+    pos = _positions(G)
+    if len(pos) < G.number_of_nodes():
+        pos = nx.spring_layout(G, seed=42, weight="weight")
+
+    cut_edges = [(u, v) for u, v in G.edges() if partition.get(u) != partition.get(v)]
+    same_edges = [(u, v) for u, v in G.edges() if partition.get(u) == partition.get(v)]
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+    nx.draw_networkx_nodes(G, pos, ax=ax, node_size=240, node_color=["#1f77b4" if partition.get(n) == 0 else "#ff7f0e" for n in G.nodes()], edgecolors="#222222", linewidths=0.8)
+    nx.draw_networkx_edges(G, pos, ax=ax, edgelist=same_edges, edge_color="#bbbbbb", alpha=0.6, width=1.2)
+    nx.draw_networkx_edges(G, pos, ax=ax, edgelist=cut_edges, edge_color="#d62728", alpha=0.95, width=2.3)
+    nx.draw_networkx_labels(G, pos, ax=ax, font_size=8, font_color="#222222")
+
+    ax.set_title("Partición de Max-Cut: bordes en rojo representan el corte", fontsize=13)
+    ax.axis("off")
+    fig.tight_layout()
+
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+    return out
+
+
 def main() -> None:
     subs = json.loads((RAW_DIR / "subestaciones.geojson").read_text(encoding="utf-8"))
     lines = json.loads((RAW_DIR / "lineas.geojson").read_text(encoding="utf-8"))
@@ -135,9 +182,27 @@ def main() -> None:
 
     p1 = plot_national(G, highlight=set(sub.nodes), out=FIG_DIR / "red_nacional.png")
     p2 = plot_subgraph(sub, out=FIG_DIR / "subred_valle_central.png")
+
+    results = {}
+    results["Greedy"] = classical_baselines.greedy_maxcut(sub, seed=0)[1]
+    results["Goemans-Williamson"] = classical_baselines.goemans_williamson(sub, n_rounding_trials=100, seed=42)[1]
+
+    p3 = plot_result_bars(results, out=FIG_DIR / "comparacion_algoritmos.png")
+
+    # Usar la partición del mejor algoritmo para mostrar el corte
+    best_algo = max(results, key=results.get)
+    if best_algo == "Greedy":
+        best_partition = classical_baselines.greedy_maxcut(sub, seed=0)[0]
+    else:
+        best_partition = classical_baselines.goemans_williamson(sub, n_rounding_trials=100, seed=42)[0]
+
+    p4 = plot_cut_partition(sub, best_partition, out=FIG_DIR / "maxcut_partition.png")
+
     print("Figuras generadas:")
     print(" -", p1)
     print(" -", p2)
+    print(" -", p3)
+    print(" -", p4)
 
 
 if __name__ == "__main__":

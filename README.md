@@ -52,6 +52,21 @@ source .venv/bin/activate
 
 When you need a new package, install it inside the activated venv, then add it to `requirements.txt` so the rest of the team picks it up next time they run the setup script.
 
+### Visualización de resultados
+
+Este proyecto incluye un script de visualización que genera gráficos modernos y profesionales a partir de la subred usada para Max-Cut:
+
+```powershell
+python -m src.visualize
+```
+
+El script produce las siguientes figuras en `figures/`:
+
+* `red_nacional.png` — mapa de la red eléctrica nacional con la subred resaltada.
+* `subred_valle_central.png` — visualización de la subred usada para los algoritmos.
+* `comparacion_algoritmos.png` — barra comparativa de los valores de Max-Cut obtenidos por los métodos clásicos.
+* `maxcut_partition.png` — partición del mejor algoritmo con los bordes cortados en rojo.
+
 ### Key dependencies
 
 * [`pytket`](https://tket.quantinuum.com/) — quantum SDK / circuit compilation

@@ -158,6 +158,76 @@ def test_qubo_ising_roundtrip():
 
 
 # --------------------------------------------------------------------------
+# Cost Hamiltonian (QAOA)
+# --------------------------------------------------------------------------
+
+def test_cost_hamiltonian_energy_matches_qubo():
+    G = _triangle(gens=(1, 1, 0))
+    q = qubo.build_qubo(G)
+    ch = qubo.qubo_to_cost_hamiltonian(q)
+    n = len(q.variables)
+    for bits in product((0, 1), repeat=n):
+        assert ch.energy(list(bits)) == pytest.approx(q.energy(list(bits)))
+
+
+def test_cost_hamiltonian_matches_ising_terms():
+    G = _triangle(gens=(1, 1, 0))
+    q = qubo.build_qubo(G)
+    ising = qubo.qubo_to_ising(q)
+    ch = qubo.qubo_to_cost_hamiltonian(q)
+    assert ch.n_qubits == len(q.variables)
+    assert ch.variables == q.variables
+    assert ch.offset == pytest.approx(ising["offset"])
+    # Single-Z terms reproduce the (non-zero) Ising fields h_i.
+    z = dict(ch.z_terms)
+    for i, hi in enumerate(ising["h"]):
+        if hi != 0:
+            assert z[i] == pytest.approx(hi)
+    # ZZ terms reproduce the couplings J_ij.
+    zz = {(i, j): c for i, j, c in ch.zz_terms}
+    for (i, j), Jij in ising["J"].items():
+        if Jij != 0:
+            assert zz[(i, j)] == pytest.approx(Jij)
+    # Every term is diagonal (Z-only, at most 2 qubits).
+    assert all(0 < len(t.qubits) <= 2 for t in ch.terms)
+
+
+def test_cost_hamiltonian_dict_assignment():
+    G = _triangle(gens=(1, 1, 0))
+    q = qubo.build_qubo(G)
+    ch = qubo.qubo_to_cost_hamiltonian(q)
+    assignment = {"a": 0, "b": 1, "c": 1}
+    assert ch.energy(assignment) == pytest.approx(q.energy(assignment))
+
+
+def test_cost_hamiltonian_guppy_terms_shape():
+    G = _triangle(gens=(1, 1, 0))
+    q = qubo.build_qubo(G)
+    ch = qubo.qubo_to_cost_hamiltonian(q)
+    gt = ch.guppy_terms()
+    assert gt["n_qubits"] == len(q.variables)
+    assert gt["offset"] == pytest.approx(ch.offset)
+    assert all(0 <= i < gt["n_qubits"] for i, _ in gt["linear"])
+    for i, j, _ in gt["quadratic"]:
+        assert 0 <= i < j < gt["n_qubits"]
+
+
+def test_cost_hamiltonian_in_json():
+    G = _triangle(gens=(1, 1, 0))
+    q = qubo.build_qubo(G)
+    doc = qubo.to_json(q)
+    ch = qubo.qubo_to_cost_hamiltonian(q)
+    assert "cost_hamiltonian" in doc
+    section = doc["cost_hamiltonian"]
+    assert section["n_qubits"] == ch.n_qubits
+    assert section["offset"] == pytest.approx(ch.offset)
+    assert len(section["terms"]) == len(ch.terms)
+    for entry in section["terms"]:
+        assert set(entry) == {"qubits", "coeff"}
+        assert 1 <= len(entry["qubits"]) <= 2
+
+
+# --------------------------------------------------------------------------
 # End-to-end optimum splits the generators
 # --------------------------------------------------------------------------
 

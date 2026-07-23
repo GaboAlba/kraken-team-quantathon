@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+httpx
+pytest
+networkx
+numpy
+cvxpy
+matplotlib
+guppylang
+selene-sim
+qnexus
+scipy

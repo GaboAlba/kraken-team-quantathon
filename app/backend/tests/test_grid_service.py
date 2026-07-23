@@ -1,0 +1,42 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import grid_service
+
+
+def test_grid_payload_shapes():
+    doc = grid_service.grid_payload()
+    assert {"nodes", "edges", "plants"} <= set(doc)
+    node = doc["nodes"][0]
+    assert {"id", "name", "lat", "lon", "is_initial"} <= set(node)
+    assert any(n["is_initial"] for n in doc["nodes"])
+    edge = doc["edges"][0]
+    assert {"u", "v", "voltage", "weight"} <= set(edge)
+    plant = doc["plants"][0]
+    assert {"name", "technology", "mw", "lat", "lon", "substation"} <= set(plant)
+    # At least the co-located plants resolve to a substation.
+    assert any(p["substation"] for p in doc["plants"])
+
+
+def test_initial_subgrid_is_valid():
+    info = grid_service.subgrid_info(list(grid_service.INITIAL_NODES))
+    assert info["valid"] is True
+    assert len(info["nodes"]) == 9
+    assert len(info["edges"]) == 9
+    assert "colorado" in info["adjacent"]      # neighbor of canas
+
+
+def test_subgrid_missing_initial_node_is_invalid():
+    nodes = [n for n in grid_service.INITIAL_NODES if n != "arenal"]
+    info = grid_service.subgrid_info(nodes)
+    assert info["valid"] is False
+    assert "arenal" in info["reason"]
+
+
+def test_subgrid_disconnected_is_invalid():
+    # cobano is far from the northern ring -> induced graph disconnects.
+    info = grid_service.subgrid_info(list(grid_service.INITIAL_NODES) + ["cobano"])
+    assert info["valid"] is False
+    assert "connect" in info["reason"].lower()

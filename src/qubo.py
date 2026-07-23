@@ -48,12 +48,18 @@ derived from the Ising form. A guppy QAOA phase-separation layer applies
 from __future__ import annotations
 
 import json
+import sys
 from dataclasses import dataclass, field
 from datetime import date
 from itertools import combinations
 from pathlib import Path
 
 import networkx as nx
+
+if __package__ in {None, ""}:
+    repo_root = Path(__file__).resolve().parents[1]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
 
 from src import weights
 

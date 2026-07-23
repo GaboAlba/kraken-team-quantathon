@@ -1,7 +1,25 @@
 from __future__ import annotations
 
+import subprocess
+import sys
+from pathlib import Path
+
 from src import classical_baselines as cb
 from src import qubo
+
+
+def test_classical_baselines_script_runs_directly() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    script_path = repo_root / "src" / "classical_baselines.py"
+
+    result = subprocess.run(
+        [sys.executable, str(script_path)],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr or result.stdout
 
 
 def test_project_graph_baselines_run_on_repo_data() -> None:

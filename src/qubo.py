@@ -36,6 +36,13 @@ Penalties (see ``PENALTIES``), both quadratic (no ancilla qubits):
   ``lambda = balance_penalty_factor * w_max``.
 
 See ``notebooks/validation.ipynb`` for a step-by-step validation.
+
+For QAOA, the QUBO is also exposed as a diagonal **cost Hamiltonian** ``H_C``
+(``qubo_to_cost_hamiltonian`` / :class:`CostHamiltonian`): a list of Pauli-Z
+terms (single ``Z_i`` fields and ``Z_i Z_j`` couplings) plus a constant offset,
+derived from the Ising form. A guppy QAOA phase-separation layer applies
+``rz(2*gamma*h_i)`` per single-``Z`` term and ``cx; rz(2*gamma*J_ij); cx`` per
+``Z_i Z_j`` term; see ``docs/qubo.md``.
 """
 
 from __future__ import annotations
@@ -355,6 +362,137 @@ def qubo_to_ising(qubo: QUBO) -> dict:
 
 
 # --------------------------------------------------------------------------
+# Cost Hamiltonian (for QAOA in guppy)
+# --------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class PauliZTerm:
+    """A single term of a diagonal (Z-only) Pauli Hamiltonian.
+
+    ``coefficient * prod_{q in qubits} Z_q``. An empty ``qubits`` tuple is the
+    identity term (the constant offset). The qubit indices are 0-based and refer
+    to the variable order in :class:`CostHamiltonian`.
+    """
+
+    coefficient: float
+    qubits: tuple[int, ...] = ()
+
+
+@dataclass
+class CostHamiltonian:
+    """Diagonal cost Hamiltonian ``H_C`` for QAOA, derived from the QUBO.
+
+    ``H_C = offset * I + sum_i h_i Z_i + sum_{i<j} J_ij Z_i Z_j``
+
+    obtained from the Ising form of the QUBO (``x_i = (1 - z_i) / 2``). Because
+    the QUBO is quadratic and Ising, every term is a product of at most two
+    ``Z`` operators, so ``H_C`` is diagonal in the computational basis and needs
+    no ``X``/``Y`` factors.
+
+    Attributes:
+        n_qubits: number of qubits (one per node variable).
+        variables: node ids in the qubit order (same order as the source QUBO).
+        terms: every non-identity Pauli-Z term (single ``Z_i`` and ``Z_i Z_j``).
+        offset: the constant (identity) coefficient.
+
+    The single-``Z`` terms are the local fields ``h_i`` and the two-``Z`` terms
+    are the couplings ``J_ij``; a QAOA phase-separation layer applies
+    ``rz(2*gamma*h_i)`` per single-``Z`` term and ``cx; rz(2*gamma*J_ij); cx``
+    per ``Z_i Z_j`` term (see :meth:`guppy_terms` and ``docs/qubo.md``). The
+    ``offset`` is a global phase and can be ignored by the circuit.
+    """
+
+    n_qubits: int
+    variables: list[str]
+    terms: list[PauliZTerm]
+    offset: float = 0.0
+
+    @property
+    def z_terms(self) -> list[tuple[int, float]]:
+        """Single-qubit ``Z_i`` terms as ``(qubit, coefficient)`` pairs."""
+        return [
+            (t.qubits[0], t.coefficient)
+            for t in self.terms
+            if len(t.qubits) == 1
+        ]
+
+    @property
+    def zz_terms(self) -> list[tuple[int, int, float]]:
+        """Two-qubit ``Z_i Z_j`` terms as ``(i, j, coefficient)`` triples."""
+        return [
+            (t.qubits[0], t.qubits[1], t.coefficient)
+            for t in self.terms
+            if len(t.qubits) == 2
+        ]
+
+    def energy(self, assignment: dict[str, int] | list[int]) -> float:
+        """Evaluate ``H_C`` on a computational-basis assignment.
+
+        ``assignment`` is a mapping ``node id -> {0, 1}`` or a list of bits
+        ordered like ``variables``. Bits are mapped to spins ``z_i = 1 - 2 x_i``
+        (``0 -> +1``, ``1 -> -1``) and every term evaluated as
+        ``coefficient * prod Z_q``. Matches :meth:`QUBO.energy` for the QUBO the
+        Hamiltonian was built from.
+        """
+        if isinstance(assignment, dict):
+            bits = [int(assignment[name]) for name in self.variables]
+        else:
+            bits = [int(b) for b in assignment]
+        z = [1 - 2 * b for b in bits]
+        e = self.offset
+        for t in self.terms:
+            val = t.coefficient
+            for q in t.qubits:
+                val *= z[q]
+            e += val
+        return e
+
+    def guppy_terms(self) -> dict:
+        """Return a plain (int/float) description for a guppy QAOA kernel.
+
+        The lists contain only ints and floats so they can be passed to a
+        ``@guppy`` / comptime kernel without Python objects:
+
+        - ``linear``: ``[(qubit, coefficient), ...]`` -> ``rz(2*gamma*coeff, q)``
+        - ``quadratic``: ``[(i, j, coefficient), ...]`` ->
+          ``cx(i, j); rz(2*gamma*coeff, j); cx(i, j)``
+        - ``offset``: constant global phase (ignored by the circuit)
+        - ``n_qubits``: qubit count
+        """
+        return {
+            "n_qubits": self.n_qubits,
+            "linear": self.z_terms,
+            "quadratic": self.zz_terms,
+            "offset": self.offset,
+        }
+
+
+def qubo_to_cost_hamiltonian(qubo: QUBO) -> CostHamiltonian:
+    """Build the diagonal QAOA cost Hamiltonian ``H_C`` from a QUBO.
+
+    Reuses :func:`qubo_to_ising` so the QUBO -> Ising -> Hamiltonian chain shares
+    a single spin-mapping definition. Single-``Z`` terms come from the Ising
+    fields ``h_i`` and two-``Z`` terms from the couplings ``J_ij``; zero
+    coefficients are dropped. Terms are ordered deterministically (single-``Z``
+    by qubit, then ``Z_i Z_j`` by ``(i, j)``).
+    """
+    ising = qubo_to_ising(qubo)
+    terms: list[PauliZTerm] = []
+    for i, hi in enumerate(ising["h"]):
+        if hi != 0:
+            terms.append(PauliZTerm(coefficient=hi, qubits=(i,)))
+    for (i, j), Jij in sorted(ising["J"].items()):
+        if Jij != 0:
+            terms.append(PauliZTerm(coefficient=Jij, qubits=(i, j)))
+    return CostHamiltonian(
+        n_qubits=len(qubo.variables),
+        variables=list(qubo.variables),
+        terms=terms,
+        offset=ising["offset"],
+    )
+
+
+# --------------------------------------------------------------------------
 # Serialization
 # --------------------------------------------------------------------------
 
@@ -372,11 +510,14 @@ def load_graph(path: Path = DEFAULT_INPUT) -> nx.Graph:
 
 
 def to_json(qubo: QUBO, metadata: dict | None = None) -> dict:
-    """Serialize a QUBO (and its Ising form) to a JSON-ready dict.
+    """Serialize a QUBO (with its Ising and cost-Hamiltonian forms) to a dict.
 
+    The ``cost_hamiltonian`` section lists the diagonal Pauli-Z terms of ``H_C``
+    (``qubits`` acted on by ``Z`` plus ``coeff``) ready for a QAOA circuit.
     Quadratic keys are stringified as ``"i,j"`` for JSON compatibility.
     """
     ising = qubo_to_ising(qubo)
+    cost_h = qubo_to_cost_hamiltonian(qubo)
     return {
         "metadata": {**qubo.metadata, **(metadata or {})},
         "variables": qubo.variables,
@@ -391,6 +532,14 @@ def to_json(qubo: QUBO, metadata: dict | None = None) -> dict:
             "h": ising["h"],
             "J": {f"{i},{j}": c for (i, j), c in sorted(ising["J"].items())},
             "offset": ising["offset"],
+        },
+        "cost_hamiltonian": {
+            "n_qubits": cost_h.n_qubits,
+            "terms": [
+                {"qubits": list(t.qubits), "coeff": t.coefficient}
+                for t in cost_h.terms
+            ],
+            "offset": cost_h.offset,
         },
     }
 
@@ -433,7 +582,11 @@ def build(
 
 if __name__ == "__main__":
     q = build()
+    ch = qubo_to_cost_hamiltonian(q)
     print(f"QUBO: {q.metadata['n_variables']} variables, "
           f"{len(q.quadratic)} quadratic terms -> {DEFAULT_OUTPUT}")
+    print(f"Cost Hamiltonian: {len(ch.terms)} Pauli-Z terms "
+          f"({len(ch.z_terms)} single-Z, {len(ch.zz_terms)} ZZ) on "
+          f"{ch.n_qubits} qubits")
     print(f"Generator nodes ({q.metadata['n_generator_nodes']}): "
           f"{', '.join(q.metadata['generator_nodes'])}")

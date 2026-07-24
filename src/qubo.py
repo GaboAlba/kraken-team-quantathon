@@ -452,6 +452,41 @@ def qubo_to_cost_hamiltonian(qubo: QUBO) -> CostHamiltonian:
 
 
 # --------------------------------------------------------------------------
+# Ising <-> graph bridge (for cut-based brute force / classical baselines)
+# --------------------------------------------------------------------------
+
+FIELD = "__field__"
+
+
+def augmented_ising_graph(ch: CostHamiltonian) -> nx.Graph:
+    """Graph whose weighted **max**-cut equals minimizing ``<H_C>``.
+
+    A ``FIELD`` node is connected to variable ``i`` with weight ``h_i`` (its side
+    fixes the ``z = +1`` gauge) and variables ``i``/``j`` are connected with
+    weight ``J_ij``. Maximizing this graph's cut minimizes
+    ``sum h_i z_i + sum J_ij z_i z_j``, so for the full spectrum
+    ``E = offset + total_weight - 2 * cut``. Every variable is added as a node
+    (even if it carries no term) so the graph always has ``n_qubits + 1`` nodes.
+    """
+    H = nx.Graph()
+    H.add_node(FIELD)
+    H.add_nodes_from(ch.variables)
+    for i, coeff in ch.z_terms:
+        if coeff:
+            H.add_edge(FIELD, ch.variables[i], weight=float(coeff))
+    for i, j, coeff in ch.zz_terms:
+        if coeff:
+            H.add_edge(ch.variables[i], ch.variables[j], weight=float(coeff))
+    return H
+
+
+def bits_from_partition(ch: CostHamiltonian, partition: dict) -> list[int]:
+    """Map an augmented-graph partition to QUBO bits (``x = 0`` on the FIELD side)."""
+    side = partition[FIELD]
+    return [0 if partition[name] == side else 1 for name in ch.variables]
+
+
+# --------------------------------------------------------------------------
 # Serialization
 # --------------------------------------------------------------------------
 

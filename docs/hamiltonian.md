@@ -72,7 +72,7 @@ live in the QAOA solver — see [`docs/qaoa.md`](qaoa.md).
 ## 4. Same `H_C`, classical evaluation
 
 The diagonal structure is also what lets the **classical** baselines score the
-*full* QUBO objective. `benchmark.augmented_ising_graph(H_C)` builds a weighted
+*full* QUBO objective. `qubo.augmented_ising_graph(H_C)` builds a weighted
 Max-Cut graph — a `FIELD` node connected to variable `i` with weight `h_i`, plus
 `J_ij` edges between variables — whose **maximum cut equals minimizing** `⟨H_C⟩`.
 The `FIELD` node fixes the `z = +1` gauge, and `bits_from_partition` maps a cut
@@ -83,8 +83,9 @@ Goemans-Williamson optimize the same operator QAOA does — see
 ## 5. Exact spectrum for scoring
 
 Because `H_C` is diagonal, its full spectrum is just the `2^n` diagonal entries.
-`qaoa.brute_force_ground_state` / `qaoa.energy_bounds` (and the vectorized
-`benchmark.brute_force_baseline`) enumerate them to get the exact `(E_min, E_max)`,
+`qaoa.brute_force_ground_state` / `qaoa.energy_bounds` and the timeout-guarded
+`benchmark.brute_force_baseline` all delegate to the single vectorized cut
+enumerator (`brute_force.enumerate_cut_spectrum`) to get the exact `(E_min, E_max)`,
 which anchor the offset-robust **approximation ratio**
 `r = (E_max − E) / (E_max − E_min)` used to compare every solver on the same
 instance. Enumeration is capped at 26 qubits (`energy_bounds(max_qubits=26)`);

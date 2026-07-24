@@ -87,14 +87,12 @@ These are genuine choices, *not* derivable from the Graph/QUBO:
 | `p` (layers)   | `2`     | cost/mixer layer count |
 | `n_shots`      | `1000`  | emulator shots per expectation value |
 | `seed`         | `7`     | fixed for reproducible runs (repo convention) |
-| iterations / `maxiter` | `40` | naive samples / SciPy iterations |
+| `maxiter`      | `40` | SciPy iterations |
 | initial params | seeded RNG | `[cost(p), mixer(p)]` half-turn multipliers |
 
-### Classical optimizer — both a baseline and the main path
+### Classical optimizer
 
-- **`solve_naive`** — the baseline: sample random angles in `[0, 1)` half-turns
-  and keep the **lowest** `⟨H_C⟩` (the notebook's naive loop, but minimizing).
-- **`solve_scipy`** — the main path: minimize `⟨H_C⟩` with SciPy **COBYLA** over
+- **`solve_scipy`** — minimize `⟨H_C⟩` with SciPy **COBYLA** over
   the flattened `[cost(p), mixer(p)]` parameters. Every emulator run reuses the
   same fixed `seed`, so the objective is deterministic.
 

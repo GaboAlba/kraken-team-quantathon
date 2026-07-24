@@ -8,7 +8,7 @@ import grid_service
 import simulation
 
 
-def fake_quantum(ising, gamma, beta, n, shots, log):
+def fake_quantum(ising, gamma, beta, n, shots, log, should_cancel=None):
     # Return shots that include the optimum pattern plus noise-like variety.
     base = [0] * n
     alt = [1] * n
@@ -21,7 +21,7 @@ def _wait(mgr, run_id, timeout=120.0):
     t0 = time.time()
     while time.time() - t0 < timeout:
         run = mgr.get(run_id)
-        if run["status"] in ("done", "error"):
+        if run["status"] in ("done", "error", "cancelled"):
             return run
         time.sleep(0.2)
     raise AssertionError("run did not finish")
@@ -47,6 +47,11 @@ def test_full_run_with_stubbed_quantum():
     assert res["methods"]["brute_force"]["found_optimum"] is True
     assert len(res["methods"]["qaoa"]["energies"]) == 30
     assert res["methods"]["qaoa"]["job_id"] == "fake-job-id"
+    bp = res["best_partition"]
+    assert bp is not None
+    assert set(bp["A"]) | set(bp["B"]) == set(grid_service.INITIAL_NODES)
+    assert bp["method"] in ("brute_force", "greedy", "goemans_williamson", "qaoa")
+    assert abs(bp["energy"] - res["optimum"]["energy"]) < 1e-6
     assert res["methods"]["qaoa"]["queued_s"] == 1.5
     assert res["methods"]["qaoa"]["running_s"] == 3.2
     assert any("fake quantum" in line for line in run["log"])
@@ -60,7 +65,7 @@ def test_stage_names_and_progress():
 
 
 def test_failed_quantum_still_reports_classical():
-    def boom(ising, gamma, beta, n, shots, log):
+    def boom(ising, gamma, beta, n, shots, log, should_cancel=None):
         raise RuntimeError("nexus down")
     mgr = simulation.RunManager()
     run_id = mgr.launch(list(grid_service.INITIAL_NODES), shots=10,
@@ -128,6 +133,8 @@ def test_impossible_brute_force_is_skipped_but_quantum_still_attempted():
     assert res["reference"]["type"] == "sdp_bound"
     assert res["methods"]["qaoa"] is not None
     assert res["methods"]["qaoa"]["p_optimal"] is None
+    assert res["best_partition"] is not None
+    assert len(res["best_partition"]["A"]) + len(res["best_partition"]["B"]) == 45
 
 
 def test_run_and_stages_report_elapsed_time():
@@ -142,3 +149,38 @@ def test_run_and_stages_report_elapsed_time():
             assert s["elapsed_s"] is not None and s["elapsed_s"] >= 0
         if s["state"] == "skipped":
             assert s["elapsed_s"] is None or s["elapsed_s"] >= 0
+
+
+def test_cancel_stops_the_run_and_nexus_stage():
+    import time as _t
+
+    def slow_quantum(ising, gamma, beta, n, shots, log, should_cancel=None):
+        deadline = _t.time() + 30
+        while _t.time() < deadline:
+            if should_cancel is not None and should_cancel():
+                raise RuntimeError("cancelled upstream")
+            _t.sleep(0.1)
+        return [[0] * n for _ in range(shots)], "never", {}
+
+    mgr = simulation.RunManager()
+    run_id = mgr.launch(list(grid_service.INITIAL_NODES), shots=5,
+                        quantum_runner=slow_quantum)
+    # wait until the quantum stage is running, then cancel
+    t0 = _t.time()
+    while _t.time() - t0 < 60:
+        run = mgr.get(run_id)
+        states = {s["name"]: s["state"] for s in run["stages"]}
+        if states["nexus_job"] == "running":
+            break
+        _t.sleep(0.2)
+    assert mgr.cancel(run_id) is True
+    run = _wait(mgr, run_id)
+    assert run["status"] == "cancelled"
+    states = {s["name"]: s["state"] for s in run["stages"]}
+    assert states["nexus_job"] == "cancelled"
+    assert states["goemans_williamson"] == "done"
+
+
+def test_cancel_unknown_run_returns_false():
+    mgr = simulation.RunManager()
+    assert mgr.cancel("nope") is False

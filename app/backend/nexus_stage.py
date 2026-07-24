@@ -72,7 +72,9 @@ def load_kernel(source: str):
 
 
 def run_quantum(ising: dict, gamma: float, beta: float, n: int, shots: int,
-                log: Callable[[str], None]) -> tuple[list[list[int]], str, dict]:
+                log: Callable[[str], None],
+                should_cancel: Callable[[], bool] | None = None,
+                ) -> tuple[list[list[int]], str, dict]:
     import qnexus as qnx
     from qnexus.models import HeliosConfig
     from quantinuum_schemas.models.backend_config import HeliosEmulatorConfig
@@ -100,6 +102,13 @@ def run_quantum(ising: dict, gamma: float, beta: float, n: int, shots: int,
     first_running_at: float | None = None
     deadline = time.monotonic() + POLL_TIMEOUT_S
     while True:
+        if should_cancel is not None and should_cancel():
+            try:
+                qnx.jobs.cancel(job)
+                log("Nexus job cancelled remotely")
+            except Exception as exc:                       # noqa: BLE001
+                log(f"Nexus job cancel request failed: {exc}")
+            raise RuntimeError("cancelled by user")
         st = qnx.jobs.status(job)
         name = getattr(getattr(st, "status", st), "name", str(st))
         log(f"Job status: {name}")

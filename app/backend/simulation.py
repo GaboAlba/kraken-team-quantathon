@@ -40,6 +40,10 @@ BF_SAMPLE_MAX = 20000    # energies shipped to the frontend chart
 QuantumRunner = Callable[..., tuple[list[list[int]], str, dict]]
 
 
+class RunCancelled(Exception):
+    """Raised inside a run when the user requested cancellation."""
+
+
 def build_augmented(q: qubo_mod.QUBO, ising: dict) -> nx.Graph:
     """Augmented Ising graph; field node FIRST so brute force pins z=+1."""
     H = nx.Graph()
@@ -141,6 +145,7 @@ class RunManager:
                         "started_ts": None, "duration_s": None}
                        for s in STAGES],
             "log": [], "results": None, "progress_pct": 0,
+            "cancel_requested": False,
         }
         with self._lock:
             self._runs[run_id] = run
@@ -149,6 +154,15 @@ class RunManager:
                              daemon=True)
         t.start()
         return run_id
+
+    def cancel(self, run_id: str) -> bool:
+        with self._lock:
+            run = self._runs.get(run_id)
+            if run is None or run["status"] != "running":
+                return False
+            run["cancel_requested"] = True
+        self._log(run, "Cancellation requested")
+        return True
 
     def get(self, run_id: str) -> dict | None:
         with self._lock:
@@ -167,7 +181,8 @@ class RunManager:
                                "detail": st["detail"], "elapsed_s": elapsed})
             end = run["finished_ts"] if run["finished_ts"] is not None else now
             out = {k: v for k, v in run.items()
-                   if k not in ("stages", "log", "started_ts", "finished_ts")}
+                   if k not in ("stages", "log", "started_ts", "finished_ts",
+                                "cancel_requested")}
             out["stages"] = stages
             out["log"] = list(run["log"])
             out["elapsed_s"] = end - run["started_ts"]
@@ -197,11 +212,19 @@ class RunManager:
         with self._lock:
             run["finished_ts"] = time.time()
 
+    def _check_cancel(self, run: dict) -> None:
+        with self._lock:
+            cancelled = run["cancel_requested"]
+        if cancelled:
+            raise RunCancelled()
+
     def _execute(self, run: dict, nodes: list[str], shots: int,
                  quantum_runner: QuantumRunner) -> None:
         results: dict = {"tier": None, "optimum": None, "reference": None,
+                         "best_partition": None,
                          "methods": {"brute_force": None, "greedy": None,
                                      "goemans_williamson": None, "qaoa": None}}
+        candidates: list[tuple[float, str, list[int]]] = []
         try:
             # 1 -- QUBO
             self._stage(run, 0, "running")
@@ -230,6 +253,7 @@ class RunManager:
                 best_E, best_idx = np.inf, 0
                 arange_n = np.arange(n, dtype=np.int64)
                 for start in range(0, total, BF_BATCH):
+                    self._check_cancel(run)
                     idx = np.arange(start, min(start + BF_BATCH, total),
                                     dtype=np.int64)
                     S = ((idx[:, None] >> arange_n) & 1).astype(np.float64)
@@ -259,6 +283,7 @@ class RunManager:
                 results["methods"]["brute_force"] = {
                     "best_energy": E_opt, "time_ms": bf_ms,
                     "energies": sample[:BF_SAMPLE_MAX], "n_states": total}
+                candidates.append((E_opt, "brute_force", x_opt))
                 self._log(run, f"Brute force: optimum {E_opt:.4f} "
                                f"({total} states, {bf_ms / 1000:.1f} s)")
                 self._stage(run, 1, "done", f"E={E_opt:.3f}")
@@ -277,28 +302,43 @@ class RunManager:
             # 3 -- greedy
             self._stage(run, 2, "running")
             t0 = time.perf_counter()
-            g_energies = [score(cb.greedy_maxcut(H, seed=s)[0])
-                          for s in range(20)]
+            g_energies = []
+            g_best_x: list[int] | None = None
+            for seed in range(20):
+                self._check_cancel(run)
+                part, _ = cb.greedy_maxcut(H, seed=seed)
+                x = x_of_partition(q, part)
+                e = float(q.energy(x))
+                g_energies.append(e)
+                if e <= min(g_energies):
+                    g_best_x = x
             g_ms = (time.perf_counter() - t0) * 1000
             results["methods"]["greedy"] = {
                 "best_energy": min(g_energies), "time_ms": g_ms,
                 "energies": g_energies}
+            if g_best_x is not None:
+                candidates.append((min(g_energies), "greedy", g_best_x))
             self._log(run, f"Greedy: best {min(g_energies):.4f} over 20 restarts")
             self._stage(run, 2, "done", f"E={min(g_energies):.3f}")
 
             # 4 -- GW + certified SDP bound
             self._stage(run, 3, "running")
             t0 = time.perf_counter()
-            gw_best_e = score(cb.goemans_williamson(
-                H, n_rounding_trials=50, seed=42)[0])
-            gw_trials = [score(cb.goemans_williamson(
-                H, n_rounding_trials=1, seed=s)[0]) for s in range(10)]
+            gw_part, _ = cb.goemans_williamson(H, n_rounding_trials=50, seed=42)
+            gw_best_x = x_of_partition(q, gw_part)
+            gw_best_e = float(q.energy(gw_best_x))
+            gw_trials = []
+            for seed in range(10):
+                self._check_cancel(run)
+                gw_trials.append(score(cb.goemans_williamson(
+                    H, n_rounding_trials=1, seed=seed)[0]))
             bound = sdp_reference(H, ising["offset"])
             gw_ms = (time.perf_counter() - t0) * 1000
             results["methods"]["goemans_williamson"] = {
                 "best_energy": gw_best_e, "time_ms": gw_ms,
                 "energies": gw_trials}
             results["sdp_bound_energy"] = bound
+            candidates.append((gw_best_e, "goemans_williamson", gw_best_x))
             if results["reference"] is None:
                 results["reference"] = {"type": "sdp_bound", "energy": bound}
             self._log(run, f"Goemans-Williamson: best {gw_best_e:.4f}; "
@@ -330,10 +370,17 @@ class RunManager:
                             self._stage(run, 5, "running",
                                         m.removeprefix("Job status:").strip())
 
+                    def _should_cancel() -> bool:
+                        with self._lock:
+                            return run["cancel_requested"]
+
                     bits, job_id, timing = quantum_runner(
                         ising=ising, gamma=gamma, beta=beta, n=n, shots=shots,
-                        log=q_log)
+                        log=q_log, should_cancel=_should_cancel)
                     qaoa_E = [float(q.energy(x)) for x in bits]
+                    qi = int(np.argmin(qaoa_E))
+                    candidates.append((float(qaoa_E[qi]), "qaoa",
+                                       [int(b) for b in bits[qi]]))
                     results["methods"]["qaoa"] = {
                         "best_energy": min(qaoa_E),
                         "mean_energy": float(np.mean(qaoa_E)),
@@ -344,6 +391,10 @@ class RunManager:
                     self._log(run, f"Quantum job {job_id}: best {min(qaoa_E):.4f}")
                     self._stage(run, 5, "done", f"E={min(qaoa_E):.3f}")
                 except Exception as exc:                   # noqa: BLE001
+                    with self._lock:
+                        was_cancelled = run["cancel_requested"]
+                    if was_cancelled:
+                        raise RunCancelled() from exc
                     self._log(run, f"Quantum stage failed: {exc}")
                     self._stage(run, 5, "error", str(exc)[:120])
                     with self._lock:
@@ -376,6 +427,13 @@ class RunManager:
                 else:
                     qaoa["p_optimal"] = None
                     qaoa["first_optimal_shot"] = None
+            if candidates:
+                best_e, best_method, best_x = min(candidates,
+                                                  key=lambda c: c[0])
+                results["best_partition"] = {
+                    "A": sorted(v for v, b in zip(q.variables, best_x) if b == 0),
+                    "B": sorted(v for v, b in zip(q.variables, best_x) if b == 1),
+                    "method": best_method, "energy": best_e}
             self._log(run, "Comparison ready "
                            f"(reference: {ref['type'] if ref else 'none'})")
             self._stage(run, 6, "done")
@@ -383,6 +441,18 @@ class RunManager:
                 run["results"] = results
                 if run["status"] != "error":
                     run["status"] = "done"
+                run["finished_ts"] = time.time()
+        except RunCancelled:
+            self._log(run, "Run cancelled by user")
+            with self._lock:
+                for st in run["stages"]:
+                    if st["state"] == "running":
+                        st["state"] = "cancelled"
+                        st["detail"] = "cancelled by user"
+                        if st["started_ts"] is not None:
+                            st["duration_s"] = time.time() - st["started_ts"]
+                run["status"] = "cancelled"
+                run["results"] = results
                 run["finished_ts"] = time.time()
         except Exception as exc:                           # noqa: BLE001
             self._log(run, f"Run failed: {exc}")

@@ -39,7 +39,7 @@ def test_simulate_requires_session(monkeypatch):
 def test_simulate_and_poll(monkeypatch):
     monkeypatch.setattr(main.nexus_stage, "check_session", lambda: "tester")
 
-    def fake_runner(ising, gamma, beta, n, shots, log):
+    def fake_runner(ising, gamma, beta, n, shots, log, should_cancel=None):
         return [[0] * n for _ in range(shots)], "job-x", {"queued_s": 0.1, "running_s": 0.2}
     monkeypatch.setattr(main.nexus_stage, "run_quantum", fake_runner)
 
@@ -59,3 +59,18 @@ def test_simulate_and_poll(monkeypatch):
 
 def test_unknown_run_404():
     assert client.get("/api/runs/nope").status_code == 404
+
+
+def test_cancel_endpoint(monkeypatch):
+    assert client.post("/api/runs/nope/cancel").status_code == 404
+
+
+def test_config_endpoint():
+    r = client.get("/api/config")
+    assert r.status_code == 200
+    doc = r.json()
+    assert doc["qaoa"]["layers"] == 1
+    assert doc["qaoa"]["default_shots"] == 500
+    assert doc["qubo"]["reference_voltage_kv"] == 230.0
+    assert doc["nexus"]["device"] == "Helios-1E-lite"
+    assert doc["scaling"]["brute_force_max_n"] == 40

@@ -217,11 +217,12 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Docs
-Docs/
-
 # macOS
 .DS_Store
 
 # Generated figures
 figures/
+
+# Generated experiment artifacts (raw run records + saved Nexus job refs)
+experiments/results/
+experiments/refs/

@@ -1,0 +1,10 @@
+flowchart TD
+    G["Weighted subgraph<br/>data/grid_cr.json"] --> BQ["build_qubo()"]
+    BQ --> Q["QUBO<br/>Q_ii, Q_ij, offset"]
+    Q -->|"x_i = (1 - z_i)/2"| I["Ising form<br/>h_i, J_ij, offset"]
+    I --> HC["CostHamiltonian H_C<br/>offset&middot;I + &Sigma; h_i Z_i + &Sigma; J_ij Z_i Z_j<br/>(diagonal)"]
+    HC --> E["energy(assignment)<br/>exact classical cost"]
+    HC --> AUG["augmented_ising_graph()<br/>FIELD node + h_i / J_ij edges"]
+    HC --> KER["QAOA phase kernel<br/>rz(2&gamma;h_i); cx rz(2&gamma;J_ij) cx"]
+    AUG --> CLS["Classical Max-Cut baselines<br/>greedy / Goemans-Williamson"]
+    KER --> QAOA["QAOA on Selene / Nexus"]

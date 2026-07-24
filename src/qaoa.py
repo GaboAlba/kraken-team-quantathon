@@ -297,12 +297,13 @@ class QAOAResult:
 # --------------------------------------------------------------------------
 
 def brute_force_ground_state(
-    ch: CostHamiltonian, max_qubits: int = 22
+    ch: CostHamiltonian, max_qubits: int = 26
 ) -> tuple[float, list[int]]:
     """Exact minimum-energy assignment by enumerating all ``2^n`` bitstrings.
 
-    Only feasible for small ``n`` (the grid subgraph is <= 12 qubits); raises for
-    ``n > max_qubits`` to avoid an intractable enumeration.
+    Only feasible for small ``n``; raises for ``n > max_qubits`` to avoid an
+    intractable enumeration. The benchmark framework (:mod:`src.benchmark`) uses a
+    faster vectorized, timeout-guarded enumeration for the larger grids.
     """
     if ch.n_qubits > max_qubits:
         raise ValueError(
@@ -318,14 +319,15 @@ def brute_force_ground_state(
     return best_energy, best_bits
 
 
-def energy_bounds(ch: CostHamiltonian, max_qubits: int = 22) -> tuple[float, float]:
+def energy_bounds(ch: CostHamiltonian, max_qubits: int = 26) -> tuple[float, float]:
     """Exact ``(min_energy, max_energy)`` of ``H_C`` over all ``2^n`` assignments.
 
     The minimum is the ground state (best fault-zone partition); the maximum is
     the worst assignment. Both are needed for the normalized approximation ratio
     (:func:`approximation_ratio`), which rescales an energy onto ``[0, 1]``.
-    Enumerates the full spectrum, so it is only feasible for small ``n`` (the
-    grid subgraph is <= 12 qubits); raises for ``n > max_qubits``.
+    Enumerates the full spectrum, so it is only feasible for small ``n``; raises
+    for ``n > max_qubits``. For the larger benchmark grids, :mod:`src.benchmark`
+    provides a vectorized, timeout-guarded variant.
     """
     if ch.n_qubits > max_qubits:
         raise ValueError(

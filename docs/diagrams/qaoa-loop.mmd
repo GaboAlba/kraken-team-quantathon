@@ -1,0 +1,11 @@
+flowchart TD
+    A["CostHamiltonian H_C<br/>data/qubo_cr.json"] --> B["build_qaoa_instance(H_C, p)<br/>weighted Guppy kernel"]
+    B --> C["Initial angles<br/>gamma[p], beta[p] (seeded RNG)"]
+    C --> D["Compile kernel for (gamma, beta)"]
+    D --> E["Run n_shots<br/>Selene (local) or Nexus Helios"]
+    E --> F["energy_from_result -> &langle;H_C&rangle;"]
+    F --> G{"COBYLA converged<br/>or maxiter reached?"}
+    G -->|no| H["COBYLA proposes new angles"]
+    H --> D
+    G -->|yes| I["Best angles + counts"]
+    I --> J["most_likely_partition()<br/>+ approximation_ratio()"]

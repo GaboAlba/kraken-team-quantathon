@@ -1,0 +1,12 @@
+flowchart TD
+    A["CostHamiltonian H_C"] --> B["Extract arrays<br/>h_i, (i, j, J_ij), offset (float32)"]
+    B --> C["Split 2^n assignments<br/>into chunks (chunk_bits = 18)"]
+    C --> D["Decode chunk to z in {+1, -1}"]
+    D --> E["Energy per row<br/>offset + z&middot;h + &Sigma; J_ij z_i z_j"]
+    E --> F["Update global e_min / e_max<br/>+ ground-state bits"]
+    F --> G{"elapsed > timeout?"}
+    G -->|no| H{"more chunks?"}
+    H -->|yes| C
+    H -->|no| OK["Baseline(source=brute_force)<br/>exact e_min, e_max"]
+    G -->|yes| TO["Abort: timed_out = True"]
+    TO --> FB["gw_baseline() fallback<br/>GW min/max as e_min/e_max proxy"]

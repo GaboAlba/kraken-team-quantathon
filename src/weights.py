@@ -47,33 +47,12 @@ def _generation(voltage: float, length_m: float, gens_u: Sequence = (),
                 gens_v: Sequence = ()) -> float:
     """Generator-aware criticality weight for a line ``u``--``v``.
 
-    For Max-Cut we want the most critical lines to be the *cheapest* to cut, so
-    the modifiers are signed to make important lines score lower. Starting from a
-    base of 1 (substations only)::
-
-        weight = 1
-               - n_gen(u) - n_gen(v)                 # -1 per nearby generator
-               - sum(power_norm) over both endpoints  # generator-size bonus
-               + 0.5   if BOTH endpoints have a generator
-               + sum_{k=1..T} 0.5**k                  # thermal penalty (halving)
-               - voltage / 1000                       # kV contribution
-
-    ``T`` is the number of fossil-thermal generators associated with the line
-    (across both endpoints). The thermal penalty is a halving series, so the
-    k-th thermal generator adds ``0.5**k`` (0.5, 0.25, 0.125, ...) for a total
-    of ``1 - 2**-T``. Higher-voltage and generator-dense lines are more critical
-    and therefore lighter; thermal (non-sustainable) generation makes a line
-    heavier (less attractive to cut).
-
-    The generator-size term subtracts each generator's ``power_norm`` -- its
-    ``power_mw`` divided by the biggest generator attached to the graph (see
-    ``graph.assign_generators``) -- so the single largest generator lowers the
-    weight by a full 1.0 and smaller ones scale proportionally. Generators
-    without a ``power_norm`` (e.g. in direct unit tests) contribute 0.
-
-    Note: this weight is not guaranteed positive -- a generator-dense,
-    high-voltage line can drive it below zero, which is intended (very critical
-    lines are the cheapest to cut).
+    Starts from a base of 1 and applies signed modifiers so the most critical
+    lines score *lowest* (cheapest to cut): ``-1`` per nearby generator, minus
+    each generator's ``power_norm``, ``+0.5`` if both endpoints have a generator,
+    a halving thermal penalty (``+0.5**k`` for the k-th fossil-thermal generator),
+    and ``-voltage/1000``. Not guaranteed positive. Generators without a
+    ``power_norm`` contribute 0. See ``docs/qubo.md`` for the full formula.
     """
     n_u, n_v = len(gens_u), len(gens_v)
     weight = 1.0 - n_u - n_v

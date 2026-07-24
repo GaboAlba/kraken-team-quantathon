@@ -1,0 +1,14 @@
+flowchart TD
+    A["grow_cost_hamiltonians()<br/>grids [9, 15, 26] from 9-node baseline"] --> B["compute_baselines()<br/>parallel; brute force or GW fallback"]
+    A --> C["build_tasks()<br/>cross-product x N_RUNS replicates<br/>(independent seeds)"]
+    C --> D["run_all()<br/>ThreadPoolExecutor; wait() awaits ALL"]
+    B --> E["summarize()<br/>per-run tidy rows"]
+    D --> E
+    E --> F["aggregate_runs()<br/>run-level mean +/- std per config"]
+    F --> G["Figures<br/>energy histograms, AR box plots,<br/>AR convergence"]
+    F --> H["save_results()<br/>experiments/results/*.json"]
+    subgraph QAOA path
+      Q["solve_scipy_helios()<br/>1 Nexus job per COBYLA iteration<br/>job refs saved for per-shot recovery"]
+    end
+    C -.QAOA tasks.-> Q
+    Q -.records.-> D

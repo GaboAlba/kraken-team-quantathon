@@ -10,8 +10,6 @@ Pipeline (Task A):
   derived from the ``Circuito`` field with format ``"SubstationA-SubstationB"``.
 - Weight: interchangeable function from ``src.weights`` (default
   ``generation_inverted``, which is generator-aware; see ``docs/qubo.md``).
-
-See ``Docs/desiciones.md`` for the rationale behind each decision.
 """
 
 from __future__ import annotations
@@ -320,7 +318,7 @@ def extract_subregion(
 
     Note: filtering by a single province yields almost radial subgraphs (trees),
     whose Max-Cut is trivial; connectivity mode is the default in the
-    experiments because it preserves cycles (see ``Docs/desiciones.md``).
+    experiments because it preserves cycles (see ``docs/qubo.md``).
     """
     if nodes is not None:
         selected = [n for n in nodes if n in G]

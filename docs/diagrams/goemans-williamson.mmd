@@ -1,0 +1,11 @@
+flowchart TD
+    A["CostHamiltonian H_C"] --> B["augmented_ising_graph()<br/>weight matrix W"]
+    B --> C["SDP relaxation (solved once)<br/>max &Sigma; W_ij (1 - X_ij)/2, diag(X) = 1, X &#8829; 0"]
+    C --> D["Factor X = V V^T<br/>via eigendecomposition"]
+    D --> E["Repeat n_shots times"]
+    E --> F["Random hyperplane r (seeded)<br/>signs = sign(V &middot; r)"]
+    F --> G["Partition -> bits_from_partition()"]
+    G --> H["energy(x) = &langle;H_C&rangle;"]
+    H --> I{"more roundings?"}
+    I -->|yes| E
+    I -->|no| J["n_shots sampled energies<br/>(best is GW value)"]

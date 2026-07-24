@@ -1,25 +1,18 @@
 """Run the grid QAOA on Quantinuum Nexus (cloud) instead of the local emulator.
 
-The Guppy kernel in :mod:`src.qaoa` is **backend-agnostic**: :func:`build_qaoa_instance`
-compiles to HUGR, and Nexus executes HUGR directly on its hosted **Selene emulator**
-(:class:`qnexus.SeleneConfig` with a ``StatevectorSimulator`` -- the same statevector
-engine used locally). A HUGR execute job returns a ``QsysResult``, the *same* type the
-local ``main.emulator(...).run()`` returns, so :func:`src.qaoa.energy_from_result` and
-:class:`src.qaoa.QAOAResult` decode the counts **unchanged**.
+The Guppy kernel in :mod:`src.qaoa` is **backend-agnostic**:
+:func:`build_qaoa_instance` compiles to HUGR, and Nexus executes it on its hosted
+Selene emulator (:class:`qnexus.SeleneConfig` with a ``StatevectorSimulator``).
+A HUGR execute job returns a ``QsysResult`` -- the same type the local
+``main.emulator(...).run()`` returns -- so :func:`src.qaoa.energy_from_result`
+and :class:`src.qaoa.QAOAResult` decode the counts unchanged. Only the *run* call
+differs: ``qnx.hugr.upload`` -> ``qnx.start_execute_job`` -> ``wait_for`` ->
+``download_result`` in place of ``main.emulator(...).run()``.
 
-Only the *run* call differs from the local path:
-
-===============================  =========================================================
-Local Selene (``src.qaoa``)      Nexus (this module)
-===============================  =========================================================
-``main.emulator(...).run()``     ``qnx.hugr.upload`` -> ``qnx.start_execute_job`` (SeleneConfig)
-                                 -> ``qnx.jobs.wait_for`` -> ``download_result`` (QsysResult)
-===============================  =========================================================
-
-This is an **experiment script**, not part of the reproducible pipeline: it needs network
-access, an interactive ``qnx.login()``, and it submits real cloud jobs (one per objective
-evaluation). Per ``skills/qnexus/SKILL.md`` it is intentionally kept out of the test suite
-and the deterministic pipeline. Import it only from the Nexus notebook / experiment code.
+This is an **experiment script**, not part of the reproducible pipeline: it needs
+network access, an interactive ``qnx.login()``, and submits real cloud jobs (one
+per objective evaluation). Kept out of the test suite; import it only from the
+Nexus notebook / experiment code.
 """
 
 from __future__ import annotations

@@ -1,0 +1,13 @@
+flowchart TD
+    S["Weighted subgraph<br/>generation_inverted weights"] --> OBJ["Cut objective (per edge)<br/>w_ij (x_i + x_j - 2 x_i x_j)"]
+    S --> GEN["Generator-spread penalty<br/>P_gen &middot; &Sigma; (1 - cut) over generator pairs"]
+    S --> BAL["Balance penalty<br/>&lambda; (&Sigma; x_i - n/2)^2"]
+    OBJ --> ACC["Accumulate to QUBO<br/>&Sigma; Q_ii x_i + &Sigma; Q_ij x_i x_j + offset"]
+    GEN --> ACC
+    BAL --> ACC
+    ACC -->|minimize-cut| SENSE{"maximize_cut?"}
+    SENSE -->|"False (default)"| MIN["+CutValue: protect critical lines"]
+    SENSE -->|True| MAX["-CutValue: classic Max-Cut"]
+    MIN --> ISING["Ising conversion<br/>h_i, J_ij, offset"]
+    MAX --> ISING
+    ISING --> OUT["data/qubo_cr.json<br/>QUBO + Ising + cost_hamiltonian"]

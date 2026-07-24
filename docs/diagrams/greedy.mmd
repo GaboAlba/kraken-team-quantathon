@@ -1,0 +1,10 @@
+flowchart TD
+    A["CostHamiltonian H_C"] --> B["augmented_ising_graph()<br/>FIELD node + h_i / J_ij edges"]
+    B --> C["Repeat n_shots times<br/>(seed + s per restart)"]
+    C --> D["Shuffle node visit order (seeded)"]
+    D --> E["For each node: assign to side<br/>with larger cut gain vs placed neighbors"]
+    E --> F["bits_from_partition()<br/>x = 0 on FIELD side"]
+    F --> G["energy(x) = &langle;H_C&rangle;"]
+    G --> H{"more restarts?"}
+    H -->|yes| C
+    H -->|no| I["n_shots sampled energies"]

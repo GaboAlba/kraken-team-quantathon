@@ -7,6 +7,7 @@ export function useRun() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
+  const gen = useRef(0)
 
   const stop = useCallback(() => {
     if (timer.current) clearInterval(timer.current)
@@ -14,13 +15,21 @@ export function useRun() {
   }, [])
 
   const start = useCallback(async (nodes: string[]) => {
+    gen.current += 1
+    const myGen = gen.current
     setError(null)
     setBusy(true)
     try {
       const { run_id } = await startSimulation(nodes)
+      if (gen.current !== myGen) return
       timer.current = setInterval(() => {
+        if (gen.current !== myGen) {
+          stop()
+          return
+        }
         fetchRun(run_id)
           .then((r) => {
+            if (gen.current !== myGen) return
             setRun(r)
             if (r.status !== 'running') {
               stop()
@@ -28,18 +37,25 @@ export function useRun() {
             }
           })
           .catch((e: Error) => {
+            if (gen.current !== myGen) return
             setError(e.message)
             stop()
             setBusy(false)
           })
       }, 2000)
     } catch (e) {
+      if (gen.current !== myGen) return
       setError(e instanceof Error ? e.message : String(e))
       setBusy(false)
     }
   }, [stop])
 
   useEffect(() => stop, [stop])
-  const reset = useCallback(() => { stop(); setRun(null); setBusy(false) }, [stop])
+  const reset = useCallback(() => {
+    gen.current += 1
+    stop()
+    setRun(null)
+    setBusy(false)
+  }, [stop])
   return { run, start, error, busy, reset }
 }

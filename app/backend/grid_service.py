@@ -16,6 +16,7 @@ from src import graph as graph_mod
 RAW = REPO / "data" / "raw"
 INITIAL_NODES: list[str] = list(graph_mod.GUANACASTE_NORTH)
 PLANT_RADIUS_M = 2000.0
+MAX_SUBGRID_NODES = 15
 
 
 @lru_cache(maxsize=1)
@@ -90,6 +91,9 @@ def subgrid_info(node_ids: list[str]) -> dict:
         reason = f"Unknown nodes: {', '.join(unknown)}"
     elif missing:
         reason = f"Initial nodes cannot be removed: {', '.join(missing)}"
+    elif len(selection) > MAX_SUBGRID_NODES:
+        reason = (f"At most {MAX_SUBGRID_NODES} nodes "
+                  "(brute force and QAOA scale exponentially)")
     else:
         H = G.subgraph(selection)
         if H.number_of_nodes() and not nx.is_connected(H):

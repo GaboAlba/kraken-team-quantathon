@@ -40,3 +40,16 @@ def test_subgrid_disconnected_is_invalid():
     info = grid_service.subgrid_info(list(grid_service.INITIAL_NODES) + ["cobano"])
     assert info["valid"] is False
     assert "connect" in info["reason"].lower()
+
+
+def test_subgrid_over_max_nodes_is_invalid():
+    # Grow a valid, connected selection past MAX_SUBGRID_NODES by repeatedly
+    # pulling in a neighbor reported as `adjacent` by the previous call.
+    selection = list(grid_service.INITIAL_NODES)
+    while len(selection) < 16:
+        info = grid_service.subgrid_info(selection)
+        assert info["adjacent"], "ran out of adjacent nodes to extend selection"
+        selection.append(info["adjacent"][0])
+    info = grid_service.subgrid_info(selection)
+    assert info["valid"] is False
+    assert "15" in info["reason"]

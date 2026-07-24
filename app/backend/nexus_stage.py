@@ -16,6 +16,7 @@ from typing import Callable
 
 DEVICE = "Helios-1E-lite"
 PROJECT = "kraken-quantathon"
+POLL_TIMEOUT_S = 1800.0
 
 
 def check_session() -> str | None:
@@ -94,6 +95,7 @@ def run_quantum(ising: dict, gamma: float, beta: float, n: int, shots: int,
         name=f"app-qaoa-run-{uuid.uuid4().hex[:6]}")
     log(f"Job submitted to {DEVICE} ({shots} shots)")
 
+    deadline = time.monotonic() + POLL_TIMEOUT_S
     while True:
         st = qnx.jobs.status(job)
         name = getattr(getattr(st, "status", st), "name", str(st))
@@ -102,6 +104,9 @@ def run_quantum(ising: dict, gamma: float, beta: float, n: int, shots: int,
             break
         if name in ("ERROR", "CANCELLED", "TERMINATED", "DEPLETED"):
             raise RuntimeError(f"Nexus job ended in {name}")
+        if time.monotonic() > deadline:
+            raise RuntimeError(
+                f"Nexus job timed out after {POLL_TIMEOUT_S:.0f}s (last status: {name})")
         time.sleep(5)
 
     result = qnx.jobs.results(job)[0].download_result()

@@ -11,9 +11,20 @@ interface Bin {
 }
 
 function bins(classical: number[], qaoa: number[], nBins = 24): Bin[] {
-  const all = [...classical, ...qaoa]
-  const lo = Math.min(...all)
-  const hi = Math.max(...all)
+  let lo = Infinity
+  let hi = -Infinity
+  for (const e of classical) {
+    if (e < lo) lo = e
+    if (e > hi) hi = e
+  }
+  for (const e of qaoa) {
+    if (e < lo) lo = e
+    if (e > hi) hi = e
+  }
+  if (!Number.isFinite(lo) || !Number.isFinite(hi)) {
+    lo = 0
+    hi = 0
+  }
   const width = (hi - lo) / nBins || 1
   const rows: Bin[] = []
   for (let i = 0; i < nBins; i++) {
@@ -21,7 +32,7 @@ function bins(classical: number[], qaoa: number[], nBins = 24): Bin[] {
     const inBin = (e: number) => e >= a && (i === nBins - 1 ? e <= a + width : e < a + width)
     rows.push({
       energy: (a + width / 2).toFixed(2),
-      classical: classical.filter(inBin).length / classical.length,
+      classical: classical.length ? classical.filter(inBin).length / classical.length : 0,
       qaoa: qaoa.length ? qaoa.filter(inBin).length / qaoa.length : 0,
     })
   }

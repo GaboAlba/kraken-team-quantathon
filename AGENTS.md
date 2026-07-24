@@ -50,14 +50,23 @@ ICE ArcGIS API ──> data/raw/*.geojson ──> national NetworkX graph ──
   of the cut) and a **balance** penalty, registered in `qubo.PENALTIES` (same
   registry convention as `weights.SCHEMES`). Emits both QUBO and Ising forms to
   `data/qubo_cr.json` (`to_json` / `save_qubo`); `build()` orchestrates it. Pass
-  `maximize_cut=True` (e.g. with `kv`) for the classic max-cut sense.
+  `maximize_cut=True` (e.g. with `kv`) for the classic max-cut sense. Also hosts
+  the Ising↔graph bridge `augmented_ising_graph` / `bits_from_partition` (a
+  `FIELD`-gauge graph whose max-cut equals minimizing `⟨H_C⟩`), used by the
+  classical baselines and the brute-force helpers.
+- `src/brute_force.py` — the **single** vectorized exact-cut enumerator
+  (`enumerate_cut_spectrum`, plus `brute_force_max_cut` / `brute_force_min_cut`).
+  Operates on a NetworkX graph, chunked in NumPy with one node pinned (global-flip
+  symmetry) so peak memory stays proportional to the chunk size. Every brute-force
+  call site delegates here: `classical_baselines` (grid max/min-cut), `qaoa`
+  (`H_C` ground state / `energy_bounds` via the augmented graph), and `benchmark`
+  (timeout-guarded baseline). Cut↔energy: `E = offset + total_weight − 2·cut`.
 - `src/qaoa.py` — Task C. Reads the cost Hamiltonian `H_C` from `data/qubo_cr.json`
   (or rebuilds it from `data/grid_cr.json`) and runs QAOA in **Guppy 0.21** on the
   **Selene** emulator, **minimizing** `⟨H_C⟩` (the QUBO is minimize-cut, so the
   signs are baked in). The weighted phase kernel applies `rz(2γh_i)` per field and
   `cx; rz(2γJ_ij); cx` per coupling, plus an `rx(2β)` mixer (`build_qaoa_instance`).
-  Two optimizers minimize `⟨H_C⟩`: `solve_naive` (random-sampling baseline) and
-  `solve_scipy` (COBYLA, main path); `build()` orchestrates it and
+  `solve_scipy` (COBYLA) minimizes `⟨H_C⟩`; `build()` orchestrates it and
   `brute_force_ground_state` gives the exact reference. See `docs/qaoa.md`.
 - `src/qaoa_nexus.py` — **experiment script** (not part of the reproducible pipeline
   or tests). Reuses the backend-agnostic Guppy kernel from `src/qaoa.py`, compiles it

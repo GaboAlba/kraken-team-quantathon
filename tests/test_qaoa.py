@@ -217,15 +217,6 @@ def test_qaoa_finds_zz_ground_state():
 
 
 @needs_quantum
-def test_solve_naive_deterministic():
-    ch = _zz_hamiltonian()
-    a = qaoa.solve_naive(ch, iterations=6, p_value=1, n_shots=200, seed=3)
-    b = qaoa.solve_naive(ch, iterations=6, p_value=1, n_shots=200, seed=3)
-    assert a.energy == pytest.approx(b.energy)
-    assert a.metadata["optimizer"] == "naive"
-
-
-@needs_quantum
 def test_qaoa_result_partition_keys():
     ch = _field_hamiltonian()
     res = qaoa.solve_scipy(ch, p_value=1, n_shots=200, seed=5, maxiter=10)

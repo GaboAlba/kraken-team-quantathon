@@ -32,7 +32,7 @@ r = (e_max − E) / (e_max − e_min)
 (`qaoa.approximation_ratio`). The bounds come from the **baseline** (§5).
 
 The classical baselines optimize Max-Cut, not `⟨H_C⟩`, directly. To make them
-optimize the *full* QUBO objective, `benchmark.augmented_ising_graph` turns `H_C`
+optimize the *full* QUBO objective, `qubo.augmented_ising_graph` turns `H_C`
 into a weighted Max-Cut graph whose maximum cut equals minimizing `⟨H_C⟩` (see
 [`docs/hamiltonian.md` §4](hamiltonian.md)). The greedy/GW samplers therefore run
 on that augmented graph and map partitions back with `bits_from_partition`.
@@ -40,17 +40,23 @@ on that augmented graph and map partitions back with `bits_from_partition`.
 ## 2. Brute force (exact optimum / reference)
 
 **Design.** The exact optimum by exhaustive enumeration of all `2^n`
-assignments. Two implementations exist:
+assignments. A **single** vectorized enumerator,
+`brute_force.enumerate_cut_spectrum`, backs every brute-force call site — it
+operates on a NetworkX graph, decodes each chunk to `z ∈ {+1, −1}` columns,
+accumulates the weighted cut with a Python loop **over the (few) edges** rather
+than a dense `chunk × n_edges` product, and pins one node to a fixed side
+(global-flip symmetry) so only `2^(n-1)` assignments are visited. That keeps
+peak memory proportional to the chunk size. Its three thin wrappers are:
 
-- `classical_baselines.brute_force_maxcut` — a simple reference for the plain
-  Max-Cut value on the project graph (capped at 22 nodes).
-- `benchmark.brute_force_baseline` — the **vectorized, timeout-guarded** version
-  used by the evaluation. It enumerates `2^n` in chunks (`chunk_bits = 18`),
-  decodes each chunk to `z ∈ {+1, −1}` columns, accumulates the energy with a
-  Python loop **over the (few) Hamiltonian terms** rather than a dense
-  `chunk × n_terms` product, and uses `float32`. That keeps peak memory
-  proportional to the chunk size, so it scales to the 26-qubit grid (~216 s,
-  under the 300 s default timeout).
+- `classical_baselines.brute_force_maxcut` / `brute_force_mincut` — the plain
+  Max-Cut (or **Min**-Cut, which avoids severing high-weight critical lines)
+  value on the project grid graph (capped at 22 nodes).
+- `qaoa.brute_force_ground_state` / `qaoa.energy_bounds` — the exact `H_C`
+  ground state / spectrum bounds, via the augmented Ising graph
+  (`E = offset + total_weight − 2·cut`).
+- `benchmark.brute_force_baseline` — the **timeout-guarded** version used by the
+  evaluation, calling the shared enumerator with `float32` and `chunk_bits = 18`
+  so it scales to the 26-qubit grid (~216 s, under the 300 s default timeout).
 
 **Why a timeout + fallback.** `2^n` growth is unavoidable, so an always-on
 timeout (`BRUTE_FORCE_TIMEOUT_S = 300`) guards it. On timeout the enumeration
@@ -94,18 +100,23 @@ value; when brute force times out, GW's min/max double as the baseline bounds.
 ## 5. QAOA (quantum, p = 1…6)
 
 The quantum optimizer's internals — the weighted Guppy 0.21 phase/mixer kernel,
-the Guppy angle-unit handling, the naive and SciPy (COBYLA) optimizers, and the
+the Guppy angle-unit handling, the SciPy (COBYLA) optimizer, and the
 Selene-vs-Nexus execution split — are documented in [`docs/qaoa.md`](qaoa.md).
 Here is only how it plugs into the comparison:
 
-- **Execution.** In the benchmark, QAOA runs COBYLA on the **Nexus Helios-1E-lite
-  emulator** (`benchmark.solve_scipy_helios`). Every objective evaluation compiles
-  the kernel for the current `(γ, β)`, submits **one Nexus job**, waits, and
-  decodes `⟨H_C⟩`.
-- **Per-iteration logging.** Each iteration's job reference is retained (and saved
-  under `experiments/refs/`) and its shot counts kept, so the full per-shot
-  distribution of every iteration is recoverable from the Nexus job results — this
-  is what powers the convergence plots.
+- **Execution.** By default the benchmark runs the QAOA COBYLA loop entirely on
+  the **local Selene emulator** (`benchmark.solve_scipy_selene`, the
+  `DEFAULT_QAOA_BACKEND = "selene"`): every objective evaluation samples the
+  Guppy kernel locally and decodes `⟨H_C⟩` offline — no cloud round-trip per
+  iteration. Passing `backend="helios"` to `build_tasks` switches to the **Nexus
+  Helios-1E-lite emulator** (`benchmark.solve_scipy_helios`), where every
+  objective evaluation compiles the kernel for the current `(γ, β)`, submits
+  **one Nexus job**, waits, and decodes `⟨H_C⟩`.
+- **Per-iteration logging.** On the Helios path each iteration's job reference is
+  retained (and saved under `experiments/refs/`) and its shot counts kept, so the
+  full per-shot distribution of every iteration is recoverable from the Nexus job
+  results — this is what powers the convergence plots. The local Selene path keeps
+  the same per-iteration shot counts (`job_ids` is empty, nothing is uploaded).
 - **"Samples".** A QAOA record's per-shot energies are those of its **best**
   (lowest `⟨H_C⟩`) iteration, so it is scored on the same `n_shots`-sized
   distribution as greedy/GW.
@@ -141,7 +152,8 @@ The experiment matrix is config-driven (edit the constants or pass arguments):
 | `SHOTS_LIST` | `[5000]` | shots / classical samples per config |
 | `MAXITER_LIST` | `[100]` | COBYLA `maxiter` per config |
 | `N_RUNS` | `3` | independent replicate runs per config |
-| `DEVICE` | `Helios-1E-lite` | Nexus emulator |
+| `DEVICE` | `Helios-1E-lite` | Nexus emulator (Helios backend only) |
+| `DEFAULT_QAOA_BACKEND` | `selene` | QAOA loop backend: local `selene` or `helios` |
 | `BRUTE_FORCE_TIMEOUT_S` | `300` | brute-force cutoff → GW fallback |
 | `MAX_WORKERS` | `8` | parallel workers |
 
@@ -152,7 +164,14 @@ statistically meaningful mean/std that a single run cannot.
 
 ### 6.3 Parallel execution — await all before analysis
 
-`compute_baselines` and `run_all` use a `ThreadPoolExecutor` and call `wait(...)`
+`run_all` uses a **`ProcessPoolExecutor`** by default (`use_processes=True`): each
+worker process has its own Guppy interpreter state, so QAOA tasks — which compile
+Guppy kernels and mutate global compiler state — execute **truly in parallel** on
+the local Selene emulator without corrupting a shared kernel. Every task callable
+(a `functools.partial` of a module-level record function) and every `EvalRecord`
+is picklable, as required for process workers. Pass `use_processes=False` to fall
+back to a `ThreadPoolExecutor`, where QAOA serializes behind `qaoa._GUPPY_LOCK`.
+`compute_baselines` (pure-NumPy brute force) and `run_all` both call `wait(...)`
 to **block until every task finishes** before any metric is computed, so the
 notebook never analyzes a partial result set. Failed tasks are reported and
 skipped rather than aborting the batch.
@@ -177,4 +196,4 @@ skipped rather than aborting the batch.
 | Brute force | exact | optimal | 1 (per grid) | `O(2^n)`, timeout-guarded |
 | Greedy | heuristic | none | `n_shots` restarts | cheap |
 | Goemans-Williamson | SDP + rounding | `0.878` (non-neg.) | `n_shots` roundings | 1 SDP solve |
-| QAOA `p` | variational quantum | heuristic | `n_shots` per iteration | 1 Nexus job / eval |
+| QAOA `p` | variational quantum | heuristic | `n_shots` per iteration | local Selene by default (`helios` = 1 Nexus job / eval) |

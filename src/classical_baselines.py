@@ -8,7 +8,6 @@ pipeline data instead of an external toy implementation.
 
 from __future__ import annotations
 
-import itertools
 from pathlib import Path
 from typing import Dict, Hashable, Tuple
 
@@ -17,6 +16,7 @@ import networkx as nx
 import numpy as np
 
 from src import qubo
+from src.brute_force import brute_force_max_cut, brute_force_min_cut
 
 Partition = Dict[Hashable, int]
 
@@ -40,27 +40,24 @@ def load_project_graph(path: str | Path = qubo.DEFAULT_INPUT) -> nx.Graph:
 
 
 def brute_force_maxcut(G: nx.Graph) -> Tuple[Partition, float]:
-    """Exact Max-Cut for small graphs via exhaustive enumeration.
+    """Exact Max-Cut for small graphs via the shared vectorized enumerator.
 
     The repository's project graph is small enough for this to remain practical.
+    Delegates to :func:`src.brute_force.brute_force_max_cut`; the value is
+    recomputed with :func:`maxcut_value` so it stays exact for the partition.
     """
-    nodes = list(G.nodes())
-    n = len(nodes)
-    if n > 22:
-        raise ValueError(
-            f"Brute force is impractical for {n} nodes (2^{n} partitions)."
-        )
+    partition, _ = brute_force_max_cut(G, max_nodes=22)
+    return partition, maxcut_value(G, partition)
 
-    best_partition: Partition = {}
-    best_value = float("-inf")
-    for bits in itertools.product([0, 1], repeat=max(n - 1, 0)):
-        assignment = (0,) + bits if n > 0 else ()
-        partition = {nodes[i]: int(assignment[i]) for i in range(n)}
-        value = maxcut_value(G, partition)
-        if value > best_value:
-            best_value = value
-            best_partition = partition
-    return best_partition, best_value
+
+def brute_force_mincut(G: nx.Graph) -> Tuple[Partition, float]:
+    """Exact **Min**-Cut for small graphs via the shared vectorized enumerator.
+
+    On the grid, higher edge weights mark more critical transmission lines, so
+    the minimum-weight cut is the fault-zone boundary that avoids severing them.
+    """
+    partition, _ = brute_force_min_cut(G, max_nodes=22)
+    return partition, maxcut_value(G, partition)
 
 
 def greedy_maxcut(G: nx.Graph, seed: int = 0) -> Tuple[Partition, float]:

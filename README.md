@@ -23,7 +23,7 @@ Design docs for each major feature (most under [`docs/`](docs)):
   quantum consumers.
 * [QAOA solver (Task C)](docs/qaoa.md) — design decisions behind `src/qaoa.py`:
   what is fixed by the Graph + QUBO vs. the QAOA hyperparameters, the weighted
-  Guppy 0.21 phase/mixer kernel, and the naive + SciPy (COBYLA) optimizers.
+  Guppy 0.21 phase/mixer kernel, and the SciPy (COBYLA) optimizer.
 * [Optimizers & comparative evaluation](docs/optimizers.md) — every optimizer
   (brute force, greedy, Goemans-Williamson, QAOA `p = 1…6`) and the parallel
   benchmark harness (`src/benchmark.py`, `notebooks/evaluation.ipynb`): growing

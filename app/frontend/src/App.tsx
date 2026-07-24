@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import { fetchGrid, fetchSubgrid } from './api'
+import { useRun } from './hooks/useRun'
 import GridMap from './components/GridMap'
+import SimulationPanel from './components/SimulationPanel'
 import SubgridPanel from './components/SubgridPanel'
-import type { GridPayload, RunRecord, SubgridInfo } from './types'
+import ResultsPanel from './components/ResultsPanel'
+import type { GridPayload, SubgridInfo } from './types'
 
 export default function App() {
   const [grid, setGrid] = useState<GridPayload | null>(null)
   const [selection, setSelection] = useState<string[]>([])
   const [subgrid, setSubgrid] = useState<SubgridInfo | null>(null)
-  const [run, setRun] = useState<RunRecord | null>(null)
+  const { run, start, error: runError, busy, reset } = useRun()
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -47,14 +50,21 @@ export default function App() {
           selection={selection}
           onAdd={(id) => {
             setSelection((s) => [...s, id])
-            setRun(null)
+            reset()
           }}
           onRemove={(id) => {
             setSelection((s) => s.filter((x) => x !== id))
-            setRun(null)
+            reset()
           }}
         />
-        {run && <p>run: {run.status}</p>}
+        <SimulationPanel
+          disabled={!subgrid?.valid}
+          busy={busy}
+          run={run}
+          error={runError}
+          onRun={() => { void start(selection) }}
+        />
+        {run?.results && <ResultsPanel results={run.results} run={run} />}
       </div>
     </div>
   )

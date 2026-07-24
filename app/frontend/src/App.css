@@ -9,3 +9,14 @@ html, body, #root { height: 100%; margin: 0; }
 .node-list li { display: flex; justify-content: space-between; padding: 2px 0; }
 .node-list button { border: 1px solid #ccc; background: #fafafa; cursor: pointer; border-radius: 4px; }
 .invalid { color: #b91c1c; }
+.run-btn { padding: 8px 18px; font-size: 1rem; background: #1f77b4; color: white; border: none; border-radius: 6px; cursor: pointer; }
+.run-btn:disabled { background: #9ca3af; cursor: not-allowed; }
+.progress { height: 10px; background: #e5e7eb; border-radius: 5px; margin: 10px 0; }
+.progress-fill { height: 100%; background: #2ca02c; border-radius: 5px; transition: width .5s; }
+.stages { list-style: none; padding: 0; font-size: .9rem; }
+.stage.done { color: #15803d; } .stage.running { color: #1d4ed8; } .stage.error { color: #b91c1c; }
+.detail { color: #6b7280; font-size: .8rem; }
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; font-size: .85rem; }
+.chart-block { margin-bottom: 14px; }
+.log { background: #111827; color: #d1d5db; padding: 10px; border-radius: 6px; font-size: .75rem; max-height: 220px; overflow-y: auto; }

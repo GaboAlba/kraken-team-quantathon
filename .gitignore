@@ -222,8 +222,3 @@ __marimo__/
 
 # Generated figures
 figures/
-
-# Generated experiment artifacts (raw run records + saved Nexus job refs)
-experiments/results/
-experiments/refs/
-experiments/figures/

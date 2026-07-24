@@ -8,7 +8,6 @@ pipeline data instead of an external toy implementation.
 
 from __future__ import annotations
 
-import itertools
 from pathlib import Path
 from typing import Dict, Hashable, Tuple
 
@@ -17,6 +16,7 @@ import networkx as nx
 import numpy as np
 
 from src import qubo
+from src.brute_force import brute_force_max_cut, brute_force_min_cut
 
 Partition = Dict[Hashable, int]
 
@@ -40,27 +40,24 @@ def load_project_graph(path: str | Path = qubo.DEFAULT_INPUT) -> nx.Graph:
 
 
 def brute_force_maxcut(G: nx.Graph) -> Tuple[Partition, float]:
-    """Exact Max-Cut for small graphs via exhaustive enumeration.
+    """Exact Max-Cut for small graphs via the shared vectorized enumerator.
 
     The repository's project graph is small enough for this to remain practical.
+    Delegates to :func:`src.brute_force.brute_force_max_cut`; the value is
+    recomputed with :func:`maxcut_value` so it stays exact for the partition.
     """
-    nodes = list(G.nodes())
-    n = len(nodes)
-    if n > 22:
-        raise ValueError(
-            f"Fuerza bruta no es práctica para {n} nodos (2^{n} particiones)."
-        )
+    partition, _ = brute_force_max_cut(G, max_nodes=22)
+    return partition, maxcut_value(G, partition)
 
-    best_partition: Partition = {}
-    best_value = float("-inf")
-    for bits in itertools.product([0, 1], repeat=max(n - 1, 0)):
-        assignment = (0,) + bits if n > 0 else ()
-        partition = {nodes[i]: int(assignment[i]) for i in range(n)}
-        value = maxcut_value(G, partition)
-        if value > best_value:
-            best_value = value
-            best_partition = partition
-    return best_partition, best_value
+
+def brute_force_mincut(G: nx.Graph) -> Tuple[Partition, float]:
+    """Exact **Min**-Cut for small graphs via the shared vectorized enumerator.
+
+    On the grid, higher edge weights mark more critical transmission lines, so
+    the minimum-weight cut is the fault-zone boundary that avoids severing them.
+    """
+    partition, _ = brute_force_min_cut(G, max_nodes=22)
+    return partition, maxcut_value(G, partition)
 
 
 def greedy_maxcut(G: nx.Graph, seed: int = 0) -> Tuple[Partition, float]:
@@ -123,9 +120,9 @@ def goemans_williamson(
     problem.solve(solver=cp.SCS)
 
     if problem.status not in {cp.OPTIMAL, cp.OPTIMAL_INACCURATE}:
-        raise RuntimeError(f"La solución SDP no es óptima: estado={problem.status}.")
+        raise RuntimeError(f"SDP solution is not optimal: status={problem.status}.")
     if X.value is None:
-        raise RuntimeError("La solución SDP no se obtuvo correctamente.")
+        raise RuntimeError("SDP solution could not be obtained.")
 
     X_val = np.asarray(X.value, dtype=float)
     eigvals, eigvecs = np.linalg.eigh(X_val)
@@ -156,10 +153,10 @@ if __name__ == "__main__":
     G = load_project_graph()
 
     bf_partition, bf_value = brute_force_maxcut(G)
-    print(f"Fuerza bruta (óptimo):      corte = {bf_value:.3f}")
+    print(f"Brute force (optimum):      cut = {bf_value:.3f}")
 
     gr_partition, gr_value = greedy_maxcut(G, seed=0)
-    print(f"Greedy:                     corte = {gr_value:.3f}")
+    print(f"Greedy:                     cut = {gr_value:.3f}")
 
     gw_partition, gw_value = goemans_williamson(G, n_rounding_trials=50, seed=42)
-    print(f"Goemans-Williamson:         corte = {gw_value:.3f}")
+    print(f"Goemans-Williamson:         cut = {gw_value:.3f}")

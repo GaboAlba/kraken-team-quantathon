@@ -1,48 +1,25 @@
 """QUBO / Max-Cut formulation of the grid subgraph (Task B).
 
 Turns the weighted subgraph in ``data/grid_cr.json`` into a QUBO (and the
-equivalent Ising Hamiltonian) suitable for Max-Cut / QAOA. One binary variable
-``x_i in {0, 1}`` is assigned to each node; ``x_i`` labels the fault-zone
-partition the substation belongs to.
-
-Objective (minimize the cut by default)::
+equivalent Ising Hamiltonian) for Max-Cut / QAOA. One binary variable
+``x_i in {0, 1}`` per node labels its fault-zone partition. The cut objective is
 
     CutValue(x) = sum_{(i,j) in E} w_ij * (x_i + x_j - 2 * x_i * x_j)
 
-The term ``x_i + x_j - 2 * x_i * x_j`` is 1 exactly when the edge is cut
-(``x_i != x_j``) and 0 otherwise, so ``CutValue`` is the total weight of the cut
-lines. QAOA/QUBO *minimize* a cost. By default the cost is
-``+CutValue + penalties`` (minimize the cut); set ``maximize_cut=True`` for the
-classic ``-CutValue + penalties`` (maximize the cut) instead.
+(the total weight of the cut lines). By default the cost is ``+CutValue +
+penalties`` (**minimize the cut**, so the boundary avoids critical lines); set
+``maximize_cut=True`` for the classic ``-CutValue`` sense.
 
-Edge weights are recomputed with the ``generation_inverted`` scheme (the
-sign-inverted generation weight) from each edge's stored ``voltage`` and its
-endpoints' generators, so the mostly-negative generation weights become mostly
-positive with the *most critical* lines scoring *highest*. Minimizing the cut
-then makes the fault-zone boundary avoid those critical lines. ``w_max`` (the
-largest edge-weight magnitude) is the scale reference for every penalty
-coefficient.
+Edge weights are recomputed with the ``generation_inverted`` scheme (critical
+lines score highest and positive); ``w_max`` (largest edge-weight magnitude) is
+the scale reference for every penalty coefficient. Two quadratic penalties (no
+ancillas) are registered in ``PENALTIES``: ``generator_spread`` keeps generators
+on both sides of the cut, and ``balance`` discourages lopsided partitions.
 
-Penalties (see ``PENALTIES``), both quadratic (no ancilla qubits):
-
-- ``generator_spread`` -- pairwise same-partition penalty over the generator
-  nodes (substations with ``n_generators > 0``). It penalizes every pair of
-  generator nodes that lands in the same partition, which is symmetric and so
-  discourages both "all generators off" (all-0) and "all generators on one
-  side" (all-1), keeping generation on both sides of the cut. Coefficient
-  ``P_gen = gen_penalty_factor * w_max`` per generator-node pair.
-- ``balance`` -- ``lambda * (sum_i x_i - n/2) ** 2``, which discourages lopsided
-  cuts and pushes toward two comparably sized fault zones. Coefficient
-  ``lambda = balance_penalty_factor * w_max``.
-
-See ``notebooks/validation.ipynb`` for a step-by-step validation.
-
-For QAOA, the QUBO is also exposed as a diagonal **cost Hamiltonian** ``H_C``
-(``qubo_to_cost_hamiltonian`` / :class:`CostHamiltonian`): a list of Pauli-Z
-terms (single ``Z_i`` fields and ``Z_i Z_j`` couplings) plus a constant offset,
-derived from the Ising form. A guppy QAOA phase-separation layer applies
-``rz(2*gamma*h_i)`` per single-``Z`` term and ``cx; rz(2*gamma*J_ij); cx`` per
-``Z_i Z_j`` term; see ``docs/qubo.md``.
+For QAOA the QUBO is also exposed as a diagonal cost Hamiltonian ``H_C``
+(:func:`qubo_to_cost_hamiltonian` / :class:`CostHamiltonian`). See ``docs/qubo.md``
+and ``docs/hamiltonian.md`` for the full derivation, and
+``notebooks/validation.ipynb`` for a step-by-step validation.
 """
 
 from __future__ import annotations
@@ -131,17 +108,6 @@ class QUBO:
         for (i, j), coeff in self.quadratic.items():
             e += coeff * x[i] * x[j]
         return e
-
-    def to_matrix(self) -> list[list[float]]:
-        """Return the symmetric QUBO matrix ``Q`` (linear terms on the diagonal)."""
-        n = len(self.variables)
-        Q = [[0.0] * n for _ in range(n)]
-        for i, coeff in self.linear.items():
-            Q[i][i] += coeff
-        for (i, j), coeff in self.quadratic.items():
-            Q[i][j] += coeff / 2.0
-            Q[j][i] += coeff / 2.0
-        return Q
 
 
 # --------------------------------------------------------------------------
@@ -382,24 +348,17 @@ class PauliZTerm:
 class CostHamiltonian:
     """Diagonal cost Hamiltonian ``H_C`` for QAOA, derived from the QUBO.
 
-    ``H_C = offset * I + sum_i h_i Z_i + sum_{i<j} J_ij Z_i Z_j``
-
-    obtained from the Ising form of the QUBO (``x_i = (1 - z_i) / 2``). Because
-    the QUBO is quadratic and Ising, every term is a product of at most two
-    ``Z`` operators, so ``H_C`` is diagonal in the computational basis and needs
-    no ``X``/``Y`` factors.
+    ``H_C = offset * I + sum_i h_i Z_i + sum_{i<j} J_ij Z_i Z_j`` (from the Ising
+    form ``x_i = (1 - z_i) / 2``), diagonal in the computational basis.
 
     Attributes:
         n_qubits: number of qubits (one per node variable).
         variables: node ids in the qubit order (same order as the source QUBO).
         terms: every non-identity Pauli-Z term (single ``Z_i`` and ``Z_i Z_j``).
-        offset: the constant (identity) coefficient.
+        offset: the constant (identity) coefficient (a global phase).
 
-    The single-``Z`` terms are the local fields ``h_i`` and the two-``Z`` terms
-    are the couplings ``J_ij``; a QAOA phase-separation layer applies
-    ``rz(2*gamma*h_i)`` per single-``Z`` term and ``cx; rz(2*gamma*J_ij); cx``
-    per ``Z_i Z_j`` term (see :meth:`guppy_terms` and ``docs/qubo.md``). The
-    ``offset`` is a global phase and can be ignored by the circuit.
+    Single-``Z`` terms are the fields ``h_i``, two-``Z`` terms the couplings
+    ``J_ij``; see ``docs/hamiltonian.md`` for how a QAOA phase layer consumes them.
     """
 
     n_qubits: int
@@ -490,6 +449,41 @@ def qubo_to_cost_hamiltonian(qubo: QUBO) -> CostHamiltonian:
         terms=terms,
         offset=ising["offset"],
     )
+
+
+# --------------------------------------------------------------------------
+# Ising <-> graph bridge (for cut-based brute force / classical baselines)
+# --------------------------------------------------------------------------
+
+FIELD = "__field__"
+
+
+def augmented_ising_graph(ch: CostHamiltonian) -> nx.Graph:
+    """Graph whose weighted **max**-cut equals minimizing ``<H_C>``.
+
+    A ``FIELD`` node is connected to variable ``i`` with weight ``h_i`` (its side
+    fixes the ``z = +1`` gauge) and variables ``i``/``j`` are connected with
+    weight ``J_ij``. Maximizing this graph's cut minimizes
+    ``sum h_i z_i + sum J_ij z_i z_j``, so for the full spectrum
+    ``E = offset + total_weight - 2 * cut``. Every variable is added as a node
+    (even if it carries no term) so the graph always has ``n_qubits + 1`` nodes.
+    """
+    H = nx.Graph()
+    H.add_node(FIELD)
+    H.add_nodes_from(ch.variables)
+    for i, coeff in ch.z_terms:
+        if coeff:
+            H.add_edge(FIELD, ch.variables[i], weight=float(coeff))
+    for i, j, coeff in ch.zz_terms:
+        if coeff:
+            H.add_edge(ch.variables[i], ch.variables[j], weight=float(coeff))
+    return H
+
+
+def bits_from_partition(ch: CostHamiltonian, partition: dict) -> list[int]:
+    """Map an augmented-graph partition to QUBO bits (``x = 0`` on the FIELD side)."""
+    side = partition[FIELD]
+    return [0 if partition[name] == side else 1 for name in ch.variables]
 
 
 # --------------------------------------------------------------------------

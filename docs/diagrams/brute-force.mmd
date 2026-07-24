@@ -1,0 +1,13 @@
+flowchart TD
+    A["CostHamiltonian H_C"] --> B["qubo.augmented_ising_graph()<br/>FIELD node + h_i / J_ij edges"]
+    B --> C["brute_force.enumerate_cut_spectrum()<br/>pin node 0; chunks (chunk_bits = 18, float32)"]
+    C --> D["Decode chunk to z in {+1, -1}"]
+    D --> E["Weighted cut per row<br/>(K &minus; &Sigma; w_ij z_i z_j) / 2"]
+    E --> F["Update global min / max cut<br/>+ optimal partitions"]
+    F --> G{"elapsed > timeout?"}
+    G -->|no| H{"more chunks?"}
+    H -->|yes| C
+    H -->|no| MAP["Map cut &rarr; energy<br/>E = offset + K &minus; 2&middot;cut"]
+    MAP --> OK["Baseline(source=brute_force)<br/>exact e_min, e_max"]
+    G -->|yes| TO["Abort: timed_out = True"]
+    TO --> FB["gw_baseline() fallback<br/>GW min/max as e_min/e_max proxy"]

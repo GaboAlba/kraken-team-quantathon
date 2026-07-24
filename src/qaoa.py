@@ -1,44 +1,19 @@
 """QAOA solver for the grid fault-zone QUBO, implemented in Guppy (Task C).
 
-Reads the diagonal cost Hamiltonian ``H_C`` produced by :mod:`src.qubo` and runs
-the Quantum Approximate Optimization Algorithm (QAOA) on it with `guppylang`
-kernels executed on the Selene emulator. The reference for the Guppy/Selene API
-and the variational-loop structure is Quantinuum's
-``qaoa_maxcut_example.ipynb`` (branch ``guppylang-0.21``).
+Reads the diagonal cost Hamiltonian ``H_C`` from :mod:`src.qubo` and runs QAOA
+with `guppylang` kernels on the Selene emulator. The QUBO is built with
+``maximize_cut=False``, so QAOA **minimizes** ``<H_C>``. The phase-separation
+layer (``rz`` per single-``Z`` field, ``cx; rz; cx`` per ``Z_i Z_j`` coupling)
+and the ``rx`` mixer follow ``docs/qaoa.md`` / ``docs/qubo.md``.
 
-What is fixed by the Graph + QUBO (nothing to decide):
+The graph + QUBO fix everything but the hyperparameters (``p``, ``n_shots``,
+``seed``). :func:`solve_scipy` (COBYLA) minimizes ``<H_C>``.
 
-- **# qubits** = number of substation nodes, one binary variable per node.
-- **Cost Hamiltonian** ``H_C = offset*I + sum_i h_i Z_i + sum_{i<j} J_ij Z_i Z_j``
-  (:class:`src.qubo.CostHamiltonian`), including the *sign* convention: the QUBO
-  is built with ``maximize_cut=False``, so QAOA **minimizes** ``<H_C>`` (unlike
-  the plain max-cut example, which maximizes an unweighted energy). Because the
-  problem is *weighted* and has *single-Z fields*, the phase-separation layer is
-  not the example's bare ``zz_phase`` per edge; it follows ``docs/qubo.md`` (and
-  ``docs/qaoa.md``):
+Guppy angle unit: ``angle(x)`` is ``x`` half-turns (``x * pi`` radians). Each
+``2*coeff`` factor is folded with ``1/pi`` at compile time so ``gamma``/``beta``
+stay plain half-turn multipliers.
 
-  =====================  ======================================
-  Cost-Hamiltonian term  Circuit fragment
-  =====================  ======================================
-  ``h_i Z_i``            ``rz(2*gamma*h_i, i)``
-  ``J_ij Z_i Z_j``       ``cx(i, j); rz(2*gamma*J_ij, j); cx(i, j)``
-  mixer                  ``rx(2*beta, i)`` per qubit
-  =====================  ======================================
-
-What the *algorithm* still needs (hyperparameters -- not derivable):
-
-- ``p`` (number of cost/mixer layers), ``n_shots``, ``seed``, and the classical
-  optimizer. Two optimizers are provided: :func:`solve_naive` (random-sampling
-  baseline, keeps the *lowest* energy) and :func:`solve_scipy` (COBYLA, the main
-  path), both minimizing ``<H_C>``.
-
-Guppy angle unit gotcha: ``angle(x)`` is ``x`` **half-turns** (``x * pi``
-radians), and ``pi == angle(1)``. To keep the literal ``rz(2*gamma*h_i)``
-*radian* convention above, the per-term coefficient ``2*h_i`` is folded (at
-compile time) with a ``1/pi`` factor into half-turns, so ``gamma`` (``beta``) is
-a plain multiplier in half-turn units.
-
-Run end-to-end (loads ``data/qubo_cr.json``, or rebuilds it from
+Run end-to-end (loads ``data/qubo_cr.json``, or rebuilds from
 ``data/grid_cr.json`` if missing)::
 
     python -m src.qaoa
@@ -48,15 +23,16 @@ from __future__ import annotations
 
 import json
 import math
+import threading
 from dataclasses import dataclass, field
-from itertools import product
 from pathlib import Path
 
 import numpy as np
 from numpy.typing import NDArray
 
 from src import qubo
-from src.qubo import CostHamiltonian, PauliZTerm
+from src.brute_force import enumerate_cut_spectrum
+from src.qubo import CostHamiltonian, PauliZTerm, augmented_ising_graph
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_QUBO = ROOT / "data" / "qubo_cr.json"
@@ -67,8 +43,14 @@ DEFAULT_FIGURE = ROOT / "figures" / "qaoa_partition.png"
 DEFAULT_LAYERS = 2
 DEFAULT_SHOTS = 1000
 DEFAULT_SEED = 7
-DEFAULT_ITERATIONS = 40  # naive baseline: number of random parameter samples
 DEFAULT_MAXITER = 40  # scipy: maximum optimizer iterations
+
+# Guppy's compiler mutates global/module state while lowering a kernel, so
+# compiling (or running, which lowers lazily) from several threads at once
+# corrupts it -- surfacing as spurious KeyError/InternalGuppyError/type errors.
+# The benchmark runs QAOA tasks in a ThreadPoolExecutor, so every Guppy
+# definition + emulator run is serialized behind this re-entrant lock.
+_GUPPY_LOCK = threading.RLock()
 
 
 # --------------------------------------------------------------------------
@@ -110,15 +92,12 @@ def cost_hamiltonian_from_graph(path: Path = DEFAULT_GRAPH) -> CostHamiltonian:
 def build_qaoa_instance(ch: CostHamiltonian, n_layers: int):
     """Build a Guppy QAOA kernel for the cost Hamiltonian ``ch``.
 
-    Returns a ``GuppyFunctionDefinition`` taking two ``frozenarray[float, p]``
-    arguments (the per-layer cost angles ``gamma`` and mixer angles ``beta``) and
+    Returns a ``GuppyFunctionDefinition`` taking the per-layer cost angles
+    ``gamma`` and mixer angles ``beta`` (each ``frozenarray[float, p]``) and
     returning the ``n_qubits`` qubits after the alternating cost/mixer layers.
-
-    The single-``Z`` fields ``h_i`` and ``Z_i Z_j`` couplings ``J_ij`` are baked
-    in as compile-time constants. Each field/coupling coefficient is converted
-    from the intended ``rz(2*gamma*coeff)`` *radian* rotation to Guppy's
-    *half-turn* angle unit by folding a ``2/pi`` factor at compile time; likewise
-    the mixer uses ``rx(2*beta)`` radians via a ``2/pi`` factor.
+    Fields ``h_i`` and couplings ``J_ij`` are baked in as compile-time constants,
+    with the radians->half-turns conversion folded per coefficient (see the
+    module docstring and ``docs/qaoa.md``).
     """
     # guppy is imported lazily so the classical helpers in this module (loading,
     # energy evaluation, brute force) stay importable even if guppy/selene are
@@ -146,7 +125,6 @@ def build_qaoa_instance(ch: CostHamiltonian, n_layers: int):
     if not zz_coeffs:
         zz_coeffs = [(0, 1, 0.0)]
 
-    @guppy
     def qaoa_instance(
         cost_angles: frozenarray[float, comptime(n_layers)],
         mixer_angles: frozenarray[float, comptime(n_layers)],
@@ -176,7 +154,9 @@ def build_qaoa_instance(ch: CostHamiltonian, n_layers: int):
 
         return qs
 
-    return qaoa_instance
+    # Serialize the Guppy compile (see _GUPPY_LOCK); ``@guppy`` == ``guppy(fn)``.
+    with _GUPPY_LOCK:
+        return guppy(qaoa_instance)
 
 
 # --------------------------------------------------------------------------
@@ -227,17 +207,21 @@ def eval_qaoa_energy(
     cost = [float(x) for x in cost_angles]
     mixer = [float(x) for x in mixer_angles]
 
-    @guppy
     def main() -> None:
         qs = instance(comptime(cost), comptime(mixer))
         guppy_result("c", measure_array(qs))
 
-    qaoa_result = (
-        main.emulator(n_qubits=ch.n_qubits)
-        .with_shots(shots)
-        .with_seed(seed)
-        .run()
-    )
+    # Serialize the Guppy compile + emulator run (see _GUPPY_LOCK). The RLock
+    # allows the ``build_qaoa_instance`` call above (when instance is None) to
+    # re-enter safely.
+    with _GUPPY_LOCK:
+        main = guppy(main)
+        qaoa_result = (
+            main.emulator(n_qubits=ch.n_qubits)
+            .with_shots(shots)
+            .with_seed(seed)
+            .run()
+        )
     return energy_from_result(ch, qaoa_result, shots), qaoa_result
 
 
@@ -274,89 +258,90 @@ class QAOAResult:
         """``H_C`` energy of the most likely bitstring."""
         return self.ch.energy(self.most_likely_bits())
 
+    def approximation_ratio(
+        self, bounds: tuple[float, float] | None = None, expectation: bool = False
+    ) -> float:
+        """Normalized approximation ratio of this solve vs. the exact optimum.
+
+        Rescales the solution energy onto ``[0, 1]`` using the exact spectrum
+        bounds (``1.0`` == optimal). By default it scores the most-likely
+        bitstring's energy; pass ``expectation=True`` to score the expectation
+        value ``<H_C>`` instead. ``bounds`` may be a precomputed
+        ``(min_energy, max_energy)`` pair (from :func:`energy_bounds`) to avoid
+        re-enumerating the spectrum; otherwise it is computed on the fly.
+        """
+        if bounds is None:
+            bounds = energy_bounds(self.ch)
+        e = self.energy if expectation else self.most_likely_energy()
+        return approximation_ratio(e, bounds[0], bounds[1])
+
 
 # --------------------------------------------------------------------------
 # Classical brute-force reference (small n)
 # --------------------------------------------------------------------------
 
-def brute_force_ground_state(
-    ch: CostHamiltonian, max_qubits: int = 22
-) -> tuple[float, list[int]]:
-    """Exact minimum-energy assignment by enumerating all ``2^n`` bitstrings.
+def _cut_spectrum(ch: CostHamiltonian, max_qubits: int):
+    """Exact cut spectrum of ``H_C`` via the shared vectorized enumerator.
 
-    Only feasible for small ``n`` (the grid subgraph is <= 12 qubits); raises for
-    ``n > max_qubits`` to avoid an intractable enumeration.
+    Refuses ``n > max_qubits`` (guarding the ``2^n`` enumeration) before building
+    the augmented Ising graph, whose max/min cut map to the ``H_C`` energy
+    bounds through ``E = offset + total_weight - 2 * cut``.
     """
     if ch.n_qubits > max_qubits:
         raise ValueError(
             f"brute force refused for {ch.n_qubits} qubits (> {max_qubits})"
         )
-    best_energy = math.inf
-    best_bits: list[int] = []
-    for bits in product((0, 1), repeat=ch.n_qubits):
-        e = ch.energy(list(bits))
-        if e < best_energy:
-            best_energy = e
-            best_bits = list(bits)
-    return best_energy, best_bits
+    graph = augmented_ising_graph(ch)
+    return enumerate_cut_spectrum(graph, max_nodes=ch.n_qubits + 1)
 
 
-# --------------------------------------------------------------------------
-# Variational loops (both minimize <H_C>)
-# --------------------------------------------------------------------------
+def brute_force_ground_state(
+    ch: CostHamiltonian, max_qubits: int = 26
+) -> tuple[float, list[int]]:
+    """Exact minimum-energy assignment by enumerating all ``2^n`` bitstrings.
 
-def solve_naive(
-    ch: CostHamiltonian,
-    iterations: int = DEFAULT_ITERATIONS,
-    p_value: int = DEFAULT_LAYERS,
-    n_shots: int = DEFAULT_SHOTS,
-    seed: int = DEFAULT_SEED,
-) -> QAOAResult:
-    """Baseline optimizer: sample random angles, keep the *lowest* ``<H_C>``.
-
-    Mirrors the Quantinuum example's naive loop but minimizes (our cost is a
-    minimize-cut objective) instead of maximizing. Angles are sampled in
-    ``[0, 1)`` half-turn units. Deterministic given ``seed``.
+    Only feasible for small ``n``; raises for ``n > max_qubits``. Delegates to
+    the shared vectorized cut enumerator (:func:`src.brute_force.enumerate_cut_spectrum`);
+    the ground state is the augmented graph's maximum cut.
     """
-    instance = build_qaoa_instance(ch, p_value)
-    rng = np.random.default_rng(seed)
+    spectrum = _cut_spectrum(ch, max_qubits)
+    energy = ch.offset + spectrum.total_weight - 2.0 * spectrum.max_value
+    partition = dict(zip(spectrum.nodes, spectrum.max_bits))
+    return energy, qubo.bits_from_partition(ch, partition)
 
-    best_energy = math.inf
-    best_cost = np.zeros(p_value)
-    best_mixer = np.zeros(p_value)
-    best_result = None
-    evaluations = 0
 
-    for _ in range(iterations):
-        guess_cost = rng.uniform(0.0, 1.0, p_value)
-        guess_mixer = rng.uniform(0.0, 1.0, p_value)
-        energy, res = eval_qaoa_energy(
-            guess_cost, guess_mixer, ch, seed=seed, shots=n_shots,
-            instance=instance,
-        )
-        evaluations += 1
-        if energy < best_energy:
-            best_energy = energy
-            best_cost = guess_cost
-            best_mixer = guess_mixer
-            best_result = res
+def energy_bounds(ch: CostHamiltonian, max_qubits: int = 26) -> tuple[float, float]:
+    """Exact ``(min_energy, max_energy)`` of ``H_C`` over all ``2^n`` assignments.
 
-    return QAOAResult(
-        energy=best_energy,
-        cost_angles=best_cost,
-        mixer_angles=best_mixer,
-        result=best_result,
-        ch=ch,
-        metadata={
-            "optimizer": "naive",
-            "p": p_value,
-            "iterations": iterations,
-            "n_shots": n_shots,
-            "seed": seed,
-            "evaluations": evaluations,
-        },
-    )
+    The minimum is the ground state (best fault-zone partition); the maximum the
+    worst assignment. Both are needed for the normalized approximation ratio
+    (:func:`approximation_ratio`). Only feasible for small ``n``. The augmented
+    graph's max cut gives ``min_energy`` and its min cut gives ``max_energy``.
+    """
+    spectrum = _cut_spectrum(ch, max_qubits)
+    e_min = ch.offset + spectrum.total_weight - 2.0 * spectrum.max_value
+    e_max = ch.offset + spectrum.total_weight - 2.0 * spectrum.min_value
+    return e_min, e_max
 
+
+def approximation_ratio(
+    energy: float, min_energy: float, max_energy: float
+) -> float:
+    """Normalized approximation ratio in ``[0, 1]`` for a *minimization* objective.
+
+    ``r = (E_max - E) / (E_max - E_min)`` -- ``1`` at the ground state ``E_min``,
+    ``0`` at the worst assignment ``E_max`` (higher is better). A degenerate
+    spectrum (``E_max == E_min``) returns ``1.0``. See ``docs/optimizers.md``.
+    """
+    span = max_energy - min_energy
+    if span == 0.0:
+        return 1.0
+    return (max_energy - energy) / span
+
+
+# --------------------------------------------------------------------------
+# Variational loop (minimizes <H_C>)
+# --------------------------------------------------------------------------
 
 def solve_scipy(
     ch: CostHamiltonian,
@@ -490,9 +475,17 @@ if __name__ == "__main__":
 
     gs_energy, gs_bits = brute_force_ground_state(ch)
     gs_partition = dict(zip(ch.variables, gs_bits))
+    e_min, e_max = energy_bounds(ch)
     print(f"\nBrute-force optimum: E = {gs_energy:.4f}")
     match = qaoa.most_likely_bits() == gs_bits
     print(f"  QAOA most-likely matches optimum: {match}")
+
+    print("\nApproximation ratio (1.0 == classical optimum, higher is better):")
+    print(f"  most-likely bitstring = {qaoa.approximation_ratio((e_min, e_max)):.4f}")
+    print(
+        "  expectation <H_C>     = "
+        f"{qaoa.approximation_ratio((e_min, e_max), expectation=True):.4f}"
+    )
 
     print("\nMost-likely partition (node -> side):")
     for node, side in partition.items():

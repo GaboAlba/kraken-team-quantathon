@@ -14,6 +14,8 @@ from pathlib import Path
 
 import pytest
 
+import numpy as np
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
@@ -98,6 +100,48 @@ def test_brute_force_refuses_large():
         qaoa.brute_force_ground_state(ch, max_qubits=22)
 
 
+def test_energy_bounds_zz():
+    ch = _zz_hamiltonian()  # spectrum is {-1, +1}
+    e_min, e_max = qaoa.energy_bounds(ch)
+    assert e_min == pytest.approx(-1.0)
+    assert e_max == pytest.approx(1.0)
+
+
+def test_energy_bounds_refuses_large():
+    ch = CostHamiltonian(n_qubits=30, variables=[str(i) for i in range(30)],
+                         terms=[], offset=0.0)
+    with pytest.raises(ValueError):
+        qaoa.energy_bounds(ch, max_qubits=22)
+
+
+def test_approximation_ratio_endpoints():
+    # r = 1 at the optimum (E_min), 0 at the worst (E_max), 0.5 midway.
+    assert qaoa.approximation_ratio(-1.0, -1.0, 1.0) == pytest.approx(1.0)
+    assert qaoa.approximation_ratio(1.0, -1.0, 1.0) == pytest.approx(0.0)
+    assert qaoa.approximation_ratio(0.0, -1.0, 1.0) == pytest.approx(0.5)
+
+
+def test_approximation_ratio_degenerate_spectrum():
+    # E_max == E_min: no spread, defined as a perfect ratio of 1.0.
+    assert qaoa.approximation_ratio(3.0, 3.0, 3.0) == pytest.approx(1.0)
+
+
+def test_qaoa_result_approximation_ratio():
+    ch = _zz_hamiltonian()  # spectrum {-1, +1}; ground states 01/10
+    # Most-likely bitstring is the ground state '01' (E=-1) -> ratio 1.0.
+    res = qaoa.QAOAResult(
+        energy=0.0,  # midway <H_C> -> ratio 0.5
+        cost_angles=np.zeros(1),
+        mixer_angles=np.zeros(1),
+        result=_FakeResult({"01": 90, "00": 10}),
+        ch=ch,
+    )
+    assert res.approximation_ratio() == pytest.approx(1.0)
+    assert res.approximation_ratio(expectation=True) == pytest.approx(0.5)
+    # Passing precomputed bounds avoids re-enumerating and gives the same result.
+    assert res.approximation_ratio(bounds=(-1.0, 1.0)) == pytest.approx(1.0)
+
+
 def test_energy_from_result_matches_hamiltonian():
     ch = _zz_hamiltonian()
     # 60% on '01' (E=-1), 40% on '00' (E=+1): expectation = -1*0.6 + 1*0.4 = -0.2
@@ -170,15 +214,6 @@ def test_qaoa_finds_zz_ground_state():
     res = qaoa.solve_scipy(ch, p_value=2, n_shots=500, seed=7, maxiter=30)
     assert res.most_likely_energy() == pytest.approx(-1.0)
     assert res.most_likely_bits() in ([0, 1], [1, 0])
-
-
-@needs_quantum
-def test_solve_naive_deterministic():
-    ch = _zz_hamiltonian()
-    a = qaoa.solve_naive(ch, iterations=6, p_value=1, n_shots=200, seed=3)
-    b = qaoa.solve_naive(ch, iterations=6, p_value=1, n_shots=200, seed=3)
-    assert a.energy == pytest.approx(b.energy)
-    assert a.metadata["optimizer"] == "naive"
 
 
 @needs_quantum

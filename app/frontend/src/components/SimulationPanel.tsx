@@ -16,6 +16,7 @@ interface Props {
   run: RunRecord | null
   error: string | null
   onRun: () => void
+  onStop: () => void
 }
 
 function fmtTime(s: number): string {
@@ -29,10 +30,11 @@ function marker(state: string): string {
   if (state === 'running') return '◌'
   if (state === 'error') return '✗'
   if (state === 'skipped') return '–'
+  if (state === 'cancelled') return '■'
   return '·'
 }
 
-export default function SimulationPanel({ disabled, busy, run, error, onRun }: Props) {
+export default function SimulationPanel({ disabled, busy, run, error, onRun, onStop }: Props) {
   return (
     <section>
       <h2 className="section-title">
@@ -44,9 +46,16 @@ export default function SimulationPanel({ disabled, busy, run, error, onRun }: P
         )}
         {run && <span className={`status-chip ${run.status}`}>{run.status}</span>}
       </h2>
-      <button className="run-btn" disabled={disabled || busy} onClick={onRun}>
-        {busy ? 'Running…' : 'Run simulation'}
-      </button>
+      <div className="run-row">
+        <button className="run-btn" disabled={disabled || busy} onClick={onRun}>
+          {busy ? 'Running…' : 'Run simulation'}
+        </button>
+        {busy && (
+          <button className="stop-btn" onClick={onStop} title="cancel the run">
+            ■ Stop
+          </button>
+        )}
+      </div>
       {error && <p className="invalid">{error}</p>}
       {run && (
         <>

@@ -1,4 +1,4 @@
-import type { GridPayload, RunRecord, SubgridInfo } from './types'
+import type { AppConfig, GridPayload, RunRecord, SubgridInfo } from './types'
 
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url)
@@ -31,4 +31,16 @@ export async function startSimulation(
 
 export function fetchRun(runId: string): Promise<RunRecord> {
   return getJson<RunRecord>(`/api/runs/${runId}`)
+}
+
+export async function cancelRun(runId: string): Promise<void> {
+  const res = await fetch(`/api/runs/${runId}/cancel`, { method: 'POST' })
+  if (!res.ok) {
+    const body = (await res.json()) as { detail: string }
+    throw new Error(body.detail)
+  }
+}
+
+export function fetchConfig(): Promise<AppConfig> {
+  return getJson<AppConfig>('/api/config')
 }

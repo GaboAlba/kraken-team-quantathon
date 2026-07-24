@@ -39,7 +39,7 @@ export interface SubgridInfo {
   tier: Tier
 }
 
-export type StageState = 'pending' | 'running' | 'done' | 'error' | 'skipped'
+export type StageState = 'pending' | 'running' | 'done' | 'error' | 'skipped' | 'cancelled'
 
 export interface Stage {
   name: string
@@ -76,6 +76,7 @@ export interface QaoaResult {
 export interface RunResults {
   tier: Tier | null
   reference: { type: 'exact' | 'sdp_bound'; energy: number } | null
+  best_partition: { A: string[]; B: string[]; method: string; energy: number } | null
   sdp_bound_energy?: number
   optimum: { energy: number; partition: { A: string[]; B: string[] } } | null
   methods: {
@@ -86,7 +87,7 @@ export interface RunResults {
   }
 }
 
-export type RunStatus = 'running' | 'done' | 'error'
+export type RunStatus = 'running' | 'done' | 'error' | 'cancelled'
 
 export interface RunRecord {
   id: string
@@ -96,4 +97,37 @@ export interface RunRecord {
   results: RunResults | null
   progress_pct: number
   elapsed_s: number
+}
+
+export interface AppConfig {
+  qaoa: {
+    layers: number
+    default_shots: number
+    angle_search: string
+    circuit: string
+  }
+  qubo: {
+    weight_scheme: string
+    objective: string
+    generator_spread_factor: number | null
+    balance_factor: number | null
+    reference_voltage_kv: number
+  }
+  classical: {
+    greedy_restarts: number
+    gw_rounding_trials: number
+    gw_seed: number
+    sdp_solver: string
+  }
+  nexus: {
+    device: string
+    project: string
+    poll_timeout_s: number
+    emulator: string
+  }
+  scaling: {
+    exact_angles_max_n: number
+    brute_force_max_n: number
+    initial_nodes: string[]
+  }
 }

@@ -6,14 +6,16 @@ import GridMap from './components/GridMap'
 import SimulationPanel from './components/SimulationPanel'
 import SubgridPanel from './components/SubgridPanel'
 import ResultsPanel from './components/ResultsPanel'
+import InfoModal from './components/InfoModal'
 import type { GridPayload, SubgridInfo } from './types'
 
 export default function App() {
   const [grid, setGrid] = useState<GridPayload | null>(null)
   const [selection, setSelection] = useState<string[]>([])
   const [subgrid, setSubgrid] = useState<SubgridInfo | null>(null)
-  const { run, start, error: runError, busy, reset } = useRun()
+  const { run, start, cancel, error: runError, busy, reset } = useRun()
   const [error, setError] = useState<string | null>(null)
+  const [showInfo, setShowInfo] = useState(false)
 
   useEffect(() => {
     fetchGrid()
@@ -42,6 +44,7 @@ export default function App() {
         </span>
         <span className="sub">Costa Rica transmission grid — fault-zone QUBO / QAOA</span>
         <span className="spacer" />
+        <button className="info-btn" onClick={() => setShowInfo(true)}>info</button>
         <span className="telemetry">
           <b>{grid.nodes.length}</b> substations · <b>{grid.edges.length}</b> lines ·{' '}
           <b>{grid.plants.length}</b> plants · subgrid <b>{selection.length}</b>
@@ -53,6 +56,7 @@ export default function App() {
             grid={grid}
             selection={new Set(selection)}
             subgridEdges={subgrid?.edges ?? []}
+            partition={run?.results?.best_partition ?? null}
           />
         </div>
         <div className="right">
@@ -75,10 +79,12 @@ export default function App() {
             run={run}
             error={runError}
             onRun={() => { void start(selection) }}
+            onStop={() => { void cancel() }}
           />
           {run?.results && <ResultsPanel results={run.results} run={run} />}
         </div>
       </div>
+      {showInfo && <InfoModal onClose={() => setShowInfo(false)} />}
     </div>
   )
 }

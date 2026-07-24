@@ -126,6 +126,14 @@ export default function ResultsPanel({ results, run }: {
       <p className="ref-note">
         reference: {refLabel} = <b>{ref.energy.toFixed(4)}</b>
       </p>
+      {results.best_partition && (
+        <p className="ref-note">
+          map: <span className="dot zone-a" /> zone A ({results.best_partition.A.length}) ·{' '}
+          <span className="dot zone-b" /> zone B ({results.best_partition.B.length}) ·{' '}
+          <span className="dot cut" /> cut lines — best found by{' '}
+          <b>{results.best_partition.method}</b>
+        </p>
+      )}
       <div className="cards">
         {m.brute_force && (
           <Card name="Brute force" best={m.brute_force.best_energy}

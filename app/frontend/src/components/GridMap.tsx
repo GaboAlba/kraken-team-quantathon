@@ -11,10 +11,19 @@ const TECH_COLORS: Record<string, string> = {
   'Térmico': '#8c564b',
 }
 
+export interface Partition {
+  A: string[]
+  B: string[]
+}
+
+const ZONE_COLORS = { A: '#4aa3ff', B: '#ffb454' }
+const CUT_COLOR = '#ff6b6b'
+
 interface Props {
   grid: GridPayload
   selection: Set<string>
   subgridEdges: GridEdge[]
+  partition: Partition | null
 }
 
 /** Smoothly refits the viewport to the active subgrid whenever it changes. */
@@ -32,7 +41,16 @@ function FitToSelection({ points }: { points: Array<[number, number]> }) {
   return null
 }
 
-export default function GridMap({ grid, selection, subgridEdges }: Props) {
+export default function GridMap({ grid, selection, subgridEdges, partition }: Props) {
+  const zoneOf = useMemo(() => {
+    const m = new Map<string, 'A' | 'B'>()
+    if (partition) {
+      for (const id of partition.A) m.set(id, 'A')
+      for (const id of partition.B) m.set(id, 'B')
+    }
+    return m
+  }, [partition])
+
   const byId = useMemo(
     () => new Map<string, GridNode>(grid.nodes.map((n) => [n.id, n])),
     [grid.nodes],
@@ -68,14 +86,24 @@ export default function GridMap({ grid, selection, subgridEdges }: Props) {
         const b = byId.get(e.v)
         if (!a || !b) return null
         const inSub = subgridPairs.has(`${e.u}|${e.v}`) || subgridPairs.has(`${e.v}|${e.u}`)
+        const zu = zoneOf.get(e.u)
+        const zv = zoneOf.get(e.v)
+        const zoned = inSub && zu !== undefined && zv !== undefined
+        const isCut = zoned && zu !== zv
+        const color = isCut
+          ? CUT_COLOR
+          : zoned && zu !== undefined
+            ? ZONE_COLORS[zu]
+            : e.voltage === 230 ? '#d62728' : '#1f77b4'
         return (
           <Polyline
             key={`${e.u}-${e.v}`}
             positions={[[a.lat, a.lon], [b.lat, b.lon]]}
             pathOptions={{
-              color: e.voltage === 230 ? '#d62728' : '#1f77b4',
-              weight: inSub ? 5 : 2.2,
+              color,
+              weight: isCut ? 6 : inSub ? 5 : 2.2,
               opacity: inSub ? 0.95 : 0.55,
+              dashArray: isCut ? '8 6' : undefined,
             }}
           />
         )
@@ -113,22 +141,28 @@ export default function GridMap({ grid, selection, subgridEdges }: Props) {
           </span>
         )
       })}
-      {grid.nodes.map((n) => (
-        <CircleMarker
-          key={n.id}
-          center={[n.lat, n.lon]}
-          radius={selection.has(n.id) ? 9 : 5}
-          pathOptions={{
-            color: 'black',
-            weight: selection.has(n.id) ? 0.8 : 0.6,
-            opacity: selection.has(n.id) ? 1 : 0.85,
-            fillColor: selection.has(n.id) ? '#2ca02c' : '#7d8d99',
-            fillOpacity: selection.has(n.id) ? 0.95 : 0.8,
-          }}
-        >
-          <Tooltip>{n.name}</Tooltip>
-        </CircleMarker>
-      ))}
+      {grid.nodes.map((n) => {
+        const zone = zoneOf.get(n.id)
+        const fill = zone !== undefined
+          ? ZONE_COLORS[zone]
+          : selection.has(n.id) ? '#2ca02c' : '#7d8d99'
+        return (
+          <CircleMarker
+            key={n.id}
+            center={[n.lat, n.lon]}
+            radius={selection.has(n.id) ? 9 : 5}
+            pathOptions={{
+              color: 'black',
+              weight: selection.has(n.id) ? 0.8 : 0.6,
+              opacity: selection.has(n.id) ? 1 : 0.85,
+              fillColor: fill,
+              fillOpacity: selection.has(n.id) ? 0.95 : 0.8,
+            }}
+          >
+            <Tooltip>{n.name}</Tooltip>
+          </CircleMarker>
+        )
+      })}
     </MapContainer>
   )
 }

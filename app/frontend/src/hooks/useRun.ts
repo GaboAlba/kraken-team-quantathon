@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { fetchRun, startSimulation } from '../api'
+import { cancelRun, fetchRun, startSimulation } from '../api'
 import type { RunRecord } from '../types'
 
 export function useRun() {
@@ -7,6 +7,7 @@ export function useRun() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
+  const runId = useRef<string | null>(null)
   const gen = useRef(0)
 
   const stop = useCallback(() => {
@@ -21,6 +22,7 @@ export function useRun() {
     setBusy(true)
     try {
       const { run_id } = await startSimulation(nodes)
+      runId.current = run_id
       if (gen.current !== myGen) return
       timer.current = setInterval(() => {
         if (gen.current !== myGen) {
@@ -50,6 +52,15 @@ export function useRun() {
     }
   }, [stop])
 
+  const cancel = useCallback(async () => {
+    if (runId.current === null) return
+    try {
+      await cancelRun(runId.current)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    }
+  }, [])
+
   useEffect(() => stop, [stop])
   const reset = useCallback(() => {
     gen.current += 1
@@ -57,5 +68,5 @@ export function useRun() {
     setRun(null)
     setBusy(false)
   }, [stop])
-  return { run, start, error, busy, reset }
+  return { run, start, cancel, error, busy, reset }
 }

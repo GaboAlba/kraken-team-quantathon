@@ -1,44 +1,20 @@
 """QAOA solver for the grid fault-zone QUBO, implemented in Guppy (Task C).
 
-Reads the diagonal cost Hamiltonian ``H_C`` produced by :mod:`src.qubo` and runs
-the Quantum Approximate Optimization Algorithm (QAOA) on it with `guppylang`
-kernels executed on the Selene emulator. The reference for the Guppy/Selene API
-and the variational-loop structure is Quantinuum's
-``qaoa_maxcut_example.ipynb`` (branch ``guppylang-0.21``).
+Reads the diagonal cost Hamiltonian ``H_C`` from :mod:`src.qubo` and runs QAOA
+with `guppylang` kernels on the Selene emulator. The QUBO is built with
+``maximize_cut=False``, so QAOA **minimizes** ``<H_C>``. The phase-separation
+layer (``rz`` per single-``Z`` field, ``cx; rz; cx`` per ``Z_i Z_j`` coupling)
+and the ``rx`` mixer follow ``docs/qaoa.md`` / ``docs/qubo.md``.
 
-What is fixed by the Graph + QUBO (nothing to decide):
+The graph + QUBO fix everything but the hyperparameters (``p``, ``n_shots``,
+``seed``, optimizer). Two optimizers minimize ``<H_C>``: :func:`solve_naive`
+(random-sampling baseline) and :func:`solve_scipy` (COBYLA, main path).
 
-- **# qubits** = number of substation nodes, one binary variable per node.
-- **Cost Hamiltonian** ``H_C = offset*I + sum_i h_i Z_i + sum_{i<j} J_ij Z_i Z_j``
-  (:class:`src.qubo.CostHamiltonian`), including the *sign* convention: the QUBO
-  is built with ``maximize_cut=False``, so QAOA **minimizes** ``<H_C>`` (unlike
-  the plain max-cut example, which maximizes an unweighted energy). Because the
-  problem is *weighted* and has *single-Z fields*, the phase-separation layer is
-  not the example's bare ``zz_phase`` per edge; it follows ``docs/qubo.md`` (and
-  ``docs/qaoa.md``):
+Guppy angle unit: ``angle(x)`` is ``x`` half-turns (``x * pi`` radians). Each
+``2*coeff`` factor is folded with ``1/pi`` at compile time so ``gamma``/``beta``
+stay plain half-turn multipliers.
 
-  =====================  ======================================
-  Cost-Hamiltonian term  Circuit fragment
-  =====================  ======================================
-  ``h_i Z_i``            ``rz(2*gamma*h_i, i)``
-  ``J_ij Z_i Z_j``       ``cx(i, j); rz(2*gamma*J_ij, j); cx(i, j)``
-  mixer                  ``rx(2*beta, i)`` per qubit
-  =====================  ======================================
-
-What the *algorithm* still needs (hyperparameters -- not derivable):
-
-- ``p`` (number of cost/mixer layers), ``n_shots``, ``seed``, and the classical
-  optimizer. Two optimizers are provided: :func:`solve_naive` (random-sampling
-  baseline, keeps the *lowest* energy) and :func:`solve_scipy` (COBYLA, the main
-  path), both minimizing ``<H_C>``.
-
-Guppy angle unit gotcha: ``angle(x)`` is ``x`` **half-turns** (``x * pi``
-radians), and ``pi == angle(1)``. To keep the literal ``rz(2*gamma*h_i)``
-*radian* convention above, the per-term coefficient ``2*h_i`` is folded (at
-compile time) with a ``1/pi`` factor into half-turns, so ``gamma`` (``beta``) is
-a plain multiplier in half-turn units.
-
-Run end-to-end (loads ``data/qubo_cr.json``, or rebuilds it from
+Run end-to-end (loads ``data/qubo_cr.json``, or rebuilds from
 ``data/grid_cr.json`` if missing)::
 
     python -m src.qaoa
@@ -110,15 +86,12 @@ def cost_hamiltonian_from_graph(path: Path = DEFAULT_GRAPH) -> CostHamiltonian:
 def build_qaoa_instance(ch: CostHamiltonian, n_layers: int):
     """Build a Guppy QAOA kernel for the cost Hamiltonian ``ch``.
 
-    Returns a ``GuppyFunctionDefinition`` taking two ``frozenarray[float, p]``
-    arguments (the per-layer cost angles ``gamma`` and mixer angles ``beta``) and
+    Returns a ``GuppyFunctionDefinition`` taking the per-layer cost angles
+    ``gamma`` and mixer angles ``beta`` (each ``frozenarray[float, p]``) and
     returning the ``n_qubits`` qubits after the alternating cost/mixer layers.
-
-    The single-``Z`` fields ``h_i`` and ``Z_i Z_j`` couplings ``J_ij`` are baked
-    in as compile-time constants. Each field/coupling coefficient is converted
-    from the intended ``rz(2*gamma*coeff)`` *radian* rotation to Guppy's
-    *half-turn* angle unit by folding a ``2/pi`` factor at compile time; likewise
-    the mixer uses ``rx(2*beta)`` radians via a ``2/pi`` factor.
+    Fields ``h_i`` and couplings ``J_ij`` are baked in as compile-time constants,
+    with the radians->half-turns conversion folded per coefficient (see the
+    module docstring and ``docs/qaoa.md``).
     """
     # guppy is imported lazily so the classical helpers in this module (loading,
     # energy evaluation, brute force) stay importable even if guppy/selene are
@@ -296,23 +269,32 @@ class QAOAResult:
 # Classical brute-force reference (small n)
 # --------------------------------------------------------------------------
 
-def brute_force_ground_state(
-    ch: CostHamiltonian, max_qubits: int = 26
-) -> tuple[float, list[int]]:
-    """Exact minimum-energy assignment by enumerating all ``2^n`` bitstrings.
+def _enumerate_energies(ch: CostHamiltonian, max_qubits: int = 26):
+    """Yield the ``H_C`` energy of every ``2^n`` bitstring (with the bits).
 
-    Only feasible for small ``n``; raises for ``n > max_qubits`` to avoid an
-    intractable enumeration. The benchmark framework (:mod:`src.benchmark`) uses a
-    faster vectorized, timeout-guarded enumeration for the larger grids.
+    Shared exact-enumeration pass for the small-``n`` brute-force helpers below.
+    Raises for ``n > max_qubits`` to avoid an intractable enumeration.
     """
     if ch.n_qubits > max_qubits:
         raise ValueError(
             f"brute force refused for {ch.n_qubits} qubits (> {max_qubits})"
         )
+    for bits in product((0, 1), repeat=ch.n_qubits):
+        yield ch.energy(list(bits)), bits
+
+
+def brute_force_ground_state(
+    ch: CostHamiltonian, max_qubits: int = 26
+) -> tuple[float, list[int]]:
+    """Exact minimum-energy assignment by enumerating all ``2^n`` bitstrings.
+
+    Only feasible for small ``n``; raises for ``n > max_qubits``. The benchmark
+    framework (:mod:`src.benchmark`) uses a faster vectorized, timeout-guarded
+    enumeration for the larger grids.
+    """
     best_energy = math.inf
     best_bits: list[int] = []
-    for bits in product((0, 1), repeat=ch.n_qubits):
-        e = ch.energy(list(bits))
+    for e, bits in _enumerate_energies(ch, max_qubits):
         if e < best_energy:
             best_energy = e
             best_bits = list(bits)
@@ -322,21 +304,13 @@ def brute_force_ground_state(
 def energy_bounds(ch: CostHamiltonian, max_qubits: int = 26) -> tuple[float, float]:
     """Exact ``(min_energy, max_energy)`` of ``H_C`` over all ``2^n`` assignments.
 
-    The minimum is the ground state (best fault-zone partition); the maximum is
-    the worst assignment. Both are needed for the normalized approximation ratio
-    (:func:`approximation_ratio`), which rescales an energy onto ``[0, 1]``.
-    Enumerates the full spectrum, so it is only feasible for small ``n``; raises
-    for ``n > max_qubits``. For the larger benchmark grids, :mod:`src.benchmark`
-    provides a vectorized, timeout-guarded variant.
+    The minimum is the ground state (best fault-zone partition); the maximum the
+    worst assignment. Both are needed for the normalized approximation ratio
+    (:func:`approximation_ratio`). Only feasible for small ``n``.
     """
-    if ch.n_qubits > max_qubits:
-        raise ValueError(
-            f"brute force refused for {ch.n_qubits} qubits (> {max_qubits})"
-        )
     min_energy = math.inf
     max_energy = -math.inf
-    for bits in product((0, 1), repeat=ch.n_qubits):
-        e = ch.energy(list(bits))
+    for e, _ in _enumerate_energies(ch, max_qubits):
         if e < min_energy:
             min_energy = e
         if e > max_energy:
@@ -349,13 +323,9 @@ def approximation_ratio(
 ) -> float:
     """Normalized approximation ratio in ``[0, 1]`` for a *minimization* objective.
 
-    Defined as ``r = (E_max - E) / (E_max - E_min)`` so ``r = 1`` at the ground
-    state ``E_min`` (the optimal partition) and ``r = 0`` at the worst assignment
-    ``E_max``. Higher is better. Unlike the naive ``E / E_min``, this rescaling is
-    robust to the arbitrary sign and offset of the weighted Ising ``H_C``, which
-    is why it is the meaningful way to compare an approximate solver (QAOA) with
-    the classical optimum on the *same* problem. A degenerate spectrum
-    (``E_max == E_min``) returns ``1.0``.
+    ``r = (E_max - E) / (E_max - E_min)`` -- ``1`` at the ground state ``E_min``,
+    ``0`` at the worst assignment ``E_max`` (higher is better). A degenerate
+    spectrum (``E_max == E_min``) returns ``1.0``. See ``docs/optimizers.md``.
     """
     span = max_energy - min_energy
     if span == 0.0:

@@ -1,34 +1,21 @@
 """Comparative evaluation framework: QAOA (Nexus/Helios) vs. classical baselines.
 
-This module powers ``notebooks/evaluation.ipynb``. It benchmarks the QAOA solver
-(run on the **Quantinuum Nexus Helios-1E-lite emulator**) against the classical
-Max-Cut baselines (**brute force**, **greedy**, **Goemans-Williamson**) on the
-*same* fault-zone QUBO, across a family of grids of growing size and a
-configurable ``shots`` x ``max_iter`` hyperparameter sweep, executed in parallel.
+Powers ``notebooks/evaluation.ipynb``. Benchmarks the QAOA solver (run on the
+**Quantinuum Nexus Helios-1E-lite emulator**) against the classical Max-Cut
+baselines (brute force, greedy, Goemans-Williamson) on the *same* fault-zone
+QUBO, across a family of grids of growing size and a ``shots`` x ``max_iter``
+sweep, executed in parallel.
 
-Like :mod:`src.qaoa_nexus`, this is **experiment support code**: it needs network
-access + an interactive ``qnx.login()`` for the QAOA path, and it is intentionally
-kept out of the reproducible pipeline and the test suite. The *offline* pieces
-(graph growth, vectorized brute force, classical samplers, metrics) are pure and
-unit-testable without Nexus.
+Like :mod:`src.qaoa_nexus`, this is **experiment support code**: the QAOA path
+needs network access + an interactive ``qnx.login()``, so it is kept out of the
+reproducible pipeline and the test suite. The offline pieces (graph growth,
+vectorized brute force, classical samplers, metrics) are pure and unit-testable.
 
-Design overview
----------------
-
-* **Grids** grow from the 9-node ``graph.GUANACASTE_NORTH`` baseline by BFS-adding
-  adjacent real substations (deterministic) up to each target size
-  (:func:`grow_cost_hamiltonians`).
-* Every method is scored on the full QUBO objective. The classical Max-Cut
-  baselines run on the *augmented Ising graph* (a ``FIELD`` node tied to every
-  variable with weight ``h_i`` plus ``J_ij`` couplings): maximizing that graph's
-  cut is exactly minimizing ``<H_C>`` (see :func:`augmented_ising_graph`).
-* **Brute force** enumerates the whole spectrum once per grid with a fast
-  vectorized, **timeout-guarded** routine; on timeout GW becomes the baseline.
-* **QAOA** runs COBYLA on Helios; every iteration submits one cloud job whose
-  reference is saved, so per-iteration shot distributions are recoverable from the
-  Nexus job results (:func:`solve_scipy_helios`).
-* :func:`run_all` executes all tasks in parallel and **awaits every task** before
-  the notebook does any analysis; :func:`summarize` computes the metrics.
+Grids grow from the 9-node ``graph.GUANACASTE_NORTH`` baseline
+(:func:`grow_cost_hamiltonians`); classical baselines run on the augmented Ising
+graph (:func:`augmented_ising_graph`) whose max-cut equals minimizing ``<H_C>``.
+:func:`run_all` runs every task in parallel and awaits them; :func:`summarize`
+computes the metrics.
 """
 
 from __future__ import annotations

@@ -42,14 +42,38 @@ def test_subgrid_disconnected_is_invalid():
     assert "connect" in info["reason"].lower()
 
 
-def test_subgrid_over_max_nodes_is_invalid():
-    # Grow a valid, connected selection past MAX_SUBGRID_NODES by repeatedly
-    # pulling in a neighbor reported as `adjacent` by the previous call.
+def _grow_selection(target: int) -> list[str]:
+    """Grow a connected selection from the initial nodes via adjacency."""
     selection = list(grid_service.INITIAL_NODES)
-    while len(selection) < 16:
+    while len(selection) < target:
         info = grid_service.subgrid_info(selection)
-        assert info["adjacent"], "ran out of adjacent nodes to extend selection"
+        assert info["adjacent"], f"no candidates left at {len(selection)}"
         selection.append(info["adjacent"][0])
-    info = grid_service.subgrid_info(selection)
-    assert info["valid"] is False
-    assert "15" in info["reason"]
+    return selection
+
+
+def test_subgrid_tiers_by_size():
+    # exact: full exact pipeline; heuristic: brute force still RUNS but QAOA
+    # angles are untuned; classical: brute force physically impossible.
+    assert grid_service.tier_for(9) == "exact"
+    assert grid_service.tier_for(22) == "exact"
+    assert grid_service.tier_for(23) == "heuristic"
+    assert grid_service.tier_for(40) == "heuristic"
+    assert grid_service.tier_for(41) == "classical"
+
+
+def test_large_selections_are_valid_with_tier():
+    sel16 = _grow_selection(16)
+    info = grid_service.subgrid_info(sel16)
+    assert info["valid"] is True
+    assert info["tier"] == "exact"
+
+    sel25 = _grow_selection(25)
+    info = grid_service.subgrid_info(sel25)
+    assert info["valid"] is True
+    assert info["tier"] == "heuristic"
+
+    sel45 = _grow_selection(45)
+    info = grid_service.subgrid_info(sel45)
+    assert info["valid"] is True
+    assert info["tier"] == "classical"

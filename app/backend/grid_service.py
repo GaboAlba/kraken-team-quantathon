@@ -16,7 +16,18 @@ from src import graph as graph_mod
 RAW = REPO / "data" / "raw"
 INITIAL_NODES: list[str] = list(graph_mod.GUANACASTE_NORTH)
 PLANT_RADIUS_M = 2000.0
-MAX_SUBGRID_NODES = 15
+EXACT_ANGLES_MAX_N = 22   # statevector angle search: memory/time bound
+BRUTE_FORCE_MAX_N = 40    # beyond this, 2^n enumeration takes days-to-eons
+
+
+def tier_for(n: int) -> str:
+    """exact: fully exact pipeline; heuristic: brute force still runs but
+    QAOA angles are untuned; classical: exhaustive search is out of reach."""
+    if n <= EXACT_ANGLES_MAX_N:
+        return "exact"
+    if n <= BRUTE_FORCE_MAX_N:
+        return "heuristic"
+    return "classical"
 
 
 @lru_cache(maxsize=1)
@@ -91,9 +102,6 @@ def subgrid_info(node_ids: list[str]) -> dict:
         reason = f"Unknown nodes: {', '.join(unknown)}"
     elif missing:
         reason = f"Initial nodes cannot be removed: {', '.join(missing)}"
-    elif len(selection) > MAX_SUBGRID_NODES:
-        reason = (f"At most {MAX_SUBGRID_NODES} nodes "
-                  "(brute force and QAOA scale exponentially)")
     else:
         H = G.subgraph(selection)
         if H.number_of_nodes() and not nx.is_connected(H):
@@ -109,4 +117,5 @@ def subgrid_info(node_ids: list[str]) -> dict:
         and G.nodes[nb].get("x") is not None
     })
     return {"valid": reason is None, "reason": reason,
-            "nodes": selection, "edges": edges, "adjacent": adjacent}
+            "nodes": selection, "edges": edges, "adjacent": adjacent,
+            "tier": tier_for(len(selection))}

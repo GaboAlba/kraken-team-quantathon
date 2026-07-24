@@ -40,7 +40,7 @@ def test_simulate_and_poll(monkeypatch):
     monkeypatch.setattr(main.nexus_stage, "check_session", lambda: "tester")
 
     def fake_runner(ising, gamma, beta, n, shots, log):
-        return [[0] * n for _ in range(shots)], "job-x"
+        return [[0] * n for _ in range(shots)], "job-x", {"queued_s": 0.1, "running_s": 0.2}
     monkeypatch.setattr(main.nexus_stage, "run_quantum", fake_runner)
 
     r = client.post("/api/simulate",

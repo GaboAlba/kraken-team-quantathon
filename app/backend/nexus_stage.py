@@ -72,7 +72,7 @@ def load_kernel(source: str):
 
 
 def run_quantum(ising: dict, gamma: float, beta: float, n: int, shots: int,
-                log: Callable[[str], None]) -> tuple[list[list[int]], str]:
+                log: Callable[[str], None]) -> tuple[list[list[int]], str, dict]:
     import qnexus as qnx
     from qnexus.models import HeliosConfig
     from quantinuum_schemas.models.backend_config import HeliosEmulatorConfig
@@ -96,10 +96,15 @@ def run_quantum(ising: dict, gamma: float, beta: float, n: int, shots: int,
     log(f"Job submitted to {DEVICE} ({shots} shots)")
 
     deadline = time.monotonic() + POLL_TIMEOUT_S
+    submitted_at = time.monotonic()
+    first_running_at: float | None = None
+    deadline = time.monotonic() + POLL_TIMEOUT_S
     while True:
         st = qnx.jobs.status(job)
         name = getattr(getattr(st, "status", st), "name", str(st))
         log(f"Job status: {name}")
+        if name == "RUNNING" and first_running_at is None:
+            first_running_at = time.monotonic()
         if name == "COMPLETED":
             break
         if name in ("ERROR", "CANCELLED", "TERMINATED", "DEPLETED"):
@@ -109,10 +114,17 @@ def run_quantum(ising: dict, gamma: float, beta: float, n: int, shots: int,
                 f"Nexus job timed out after {POLL_TIMEOUT_S:.0f}s (last status: {name})")
         time.sleep(5)
 
+    completed_at = time.monotonic()
+    # Phase split at 5 s poll granularity; if RUNNING was never observed the
+    # whole wait counts as queued.
+    run_start = first_running_at if first_running_at is not None else completed_at
+    timing = {"queued_s": round(run_start - submitted_at, 1),
+              "running_s": round(completed_at - run_start, 1)}
+
     result = qnx.jobs.results(job)[0].download_result()
     bits_out: list[list[int]] = []
     for shot in result.results:
         entries = dict(shot.entries)
         bits_out.append([int(entries[f"x{i}"]) for i in range(n)])
     log(f"Downloaded {len(bits_out)} shots")
-    return bits_out, str(job.id)
+    return bits_out, str(job.id), timing

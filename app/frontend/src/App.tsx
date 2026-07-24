@@ -35,36 +35,49 @@ export default function App() {
   if (!grid) return <div className="banner">Loading grid…</div>
 
   return (
-    <div className="layout">
-      <div className="left">
-        <GridMap
-          grid={grid}
-          selection={new Set(selection)}
-          subgridEdges={subgrid?.edges ?? []}
-        />
-      </div>
-      <div className="right">
-        <SubgridPanel
-          grid={grid}
-          subgrid={subgrid}
-          selection={selection}
-          onAdd={(id) => {
-            setSelection((s) => [...s, id])
-            reset()
-          }}
-          onRemove={(id) => {
-            setSelection((s) => s.filter((x) => x !== id))
-            reset()
-          }}
-        />
-        <SimulationPanel
-          disabled={!subgrid?.valid}
-          busy={busy}
-          run={run}
-          error={runError}
-          onRun={() => { void start(selection) }}
-        />
-        {run?.results && <ResultsPanel results={run.results} run={run} />}
+    <div className="shell">
+      <header className="topbar">
+        <span className="brand">
+          Grid<span className="accent">·</span>Simulator
+        </span>
+        <span className="sub">Costa Rica transmission grid — fault-zone QUBO / QAOA</span>
+        <span className="spacer" />
+        <span className="telemetry">
+          <b>{grid.nodes.length}</b> substations · <b>{grid.edges.length}</b> lines ·{' '}
+          <b>{grid.plants.length}</b> plants · subgrid <b>{selection.length}</b>
+        </span>
+      </header>
+      <div className="layout">
+        <div className="left">
+          <GridMap
+            grid={grid}
+            selection={new Set(selection)}
+            subgridEdges={subgrid?.edges ?? []}
+          />
+        </div>
+        <div className="right">
+          <SubgridPanel
+            grid={grid}
+            subgrid={subgrid}
+            selection={selection}
+            onAdd={(id) => {
+              setSelection((s) => [...s, id])
+              reset()
+            }}
+            onRemove={(id) => {
+              setSelection((s) => s.filter((x) => x !== id))
+              reset()
+            }}
+          />
+          <SimulationPanel
+            disabled={!subgrid?.valid}
+            busy={busy}
+            run={run}
+            error={runError}
+            onRun={() => { void start(selection) }}
+          />
+          {run?.results && <ResultsPanel results={run.results} run={run} />}
+        </div>
       </div>
     </div>
   )

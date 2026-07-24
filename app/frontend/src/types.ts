@@ -28,45 +28,55 @@ export interface GridPayload {
   plants: Plant[]
 }
 
+export type Tier = 'exact' | 'heuristic' | 'classical'
+
 export interface SubgridInfo {
   valid: boolean
   reason: string | null
   nodes: string[]
   edges: GridEdge[]
   adjacent: string[]
+  tier: Tier
 }
 
-export type StageState = 'pending' | 'running' | 'done' | 'error'
+export type StageState = 'pending' | 'running' | 'done' | 'error' | 'skipped'
 
 export interface Stage {
   name: string
   state: StageState
   detail: string
+  elapsed_s: number | null
 }
 
 export interface MethodResult {
   best_energy: number
   gap_pct: number
   time_ms: number
-  found_optimum: boolean
+  found_optimum: boolean | null
   energies: number[]
+  n_states?: number
 }
 
 export interface QaoaResult {
   best_energy: number
   gap_pct: number
   mean_energy: number
-  found_optimum: boolean
-  p_optimal: number
+  found_optimum: boolean | null
+  p_optimal: number | null
   first_optimal_shot: number | null
   shots: number
   energies: number[]
   gamma: number
   beta: number
   job_id: string
+  queued_s: number
+  running_s: number
 }
 
 export interface RunResults {
+  tier: Tier | null
+  reference: { type: 'exact' | 'sdp_bound'; energy: number } | null
+  sdp_bound_energy?: number
   optimum: { energy: number; partition: { A: string[]; B: string[] } } | null
   methods: {
     brute_force: MethodResult | null
@@ -85,4 +95,5 @@ export interface RunRecord {
   log: string[]
   results: RunResults | null
   progress_pct: number
+  elapsed_s: number
 }

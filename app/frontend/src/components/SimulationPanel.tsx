@@ -18,10 +18,32 @@ interface Props {
   onRun: () => void
 }
 
+function fmtTime(s: number): string {
+  if (s < 60) return `${s.toFixed(1)}s`
+  const m = Math.floor(s / 60)
+  return `${m}m ${String(Math.floor(s % 60)).padStart(2, '0')}s`
+}
+
+function marker(state: string): string {
+  if (state === 'done') return '✓'
+  if (state === 'running') return '◌'
+  if (state === 'error') return '✗'
+  if (state === 'skipped') return '–'
+  return '·'
+}
+
 export default function SimulationPanel({ disabled, busy, run, error, onRun }: Props) {
   return (
     <section>
-      <h2>Simulation</h2>
+      <h2 className="section-title">
+        Simulation
+        {run && (
+          <span className="count">
+            {run.progress_pct}% · {fmtTime(run.elapsed_s)}
+          </span>
+        )}
+        {run && <span className={`status-chip ${run.status}`}>{run.status}</span>}
+      </h2>
       <button className="run-btn" disabled={disabled || busy} onClick={onRun}>
         {busy ? 'Running…' : 'Run simulation'}
       </button>
@@ -34,9 +56,12 @@ export default function SimulationPanel({ disabled, busy, run, error, onRun }: P
           <ul className="stages">
             {run.stages.map((s) => (
               <li key={s.name} className={`stage ${s.state}`}>
-                {s.state === 'done' ? '✓' : s.state === 'running' ? '⟳' : s.state === 'error' ? '✗' : '·'}{' '}
+                <span className="marker">{marker(s.state)}</span>
                 {STAGE_LABELS[s.name] ?? s.name}
-                {s.detail && <span className="detail"> — {s.detail}</span>}
+                {s.detail && <span className="detail">{s.detail}</span>}
+                {s.elapsed_s !== null && (
+                  <span className="stage-time">{fmtTime(s.elapsed_s)}</span>
+                )}
               </li>
             ))}
           </ul>

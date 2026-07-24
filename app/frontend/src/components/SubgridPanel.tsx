@@ -14,29 +14,43 @@ export default function SubgridPanel({ grid, subgrid, selection, onAdd, onRemove
 
   return (
     <section>
-      <h2>Subgrid ({selection.length} nodes)</h2>
+      <h2 className="section-title">
+        Subgrid <span className="count">{selection.length} nodes</span>
+        {subgrid && <span className={`tier tier-${subgrid.tier}`}>{subgrid.tier}</span>}
+      </h2>
       {subgrid && !subgrid.valid && <p className="invalid">⚠ {subgrid.reason}</p>}
       <ul className="node-list">
         {selection.map((id) => (
           <li key={id}>
             {names.get(id) ?? id}
             {initials.has(id) ? (
-              <span title="initial node — locked"> 🔒</span>
+              <span className="lock" title="initial node — locked">🔒</span>
             ) : (
-              <button onClick={() => onRemove(id)} title="remove">×</button>
+              <button
+                className="icon-btn"
+                onClick={() => onRemove(id)}
+                aria-label={`remove ${names.get(id) ?? id}`}
+                title="remove"
+              >
+                ×
+              </button>
             )}
           </li>
         ))}
       </ul>
-      <h3>Adjacent candidates</h3>
-      <ul className="node-list">
+      <h2 className="section-title">Adjacent candidates</h2>
+      <div className="chips">
         {(subgrid?.adjacent ?? []).map((id) => (
-          <li key={id}>
+          <button
+            key={id}
+            className="chip"
+            onClick={() => onAdd(id)}
+            aria-label={`add ${names.get(id) ?? id}`}
+          >
             {names.get(id) ?? id}
-            <button onClick={() => onAdd(id)} title="add">+</button>
-          </li>
+          </button>
         ))}
-      </ul>
+      </div>
     </section>
   )
 }

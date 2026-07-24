@@ -1,0 +1,13 @@
+flowchart TD
+    HC["CostHamiltonian H_C"] --> BASE["Baseline (reference)<br/>brute force exact, or GW fallback<br/>-> e_min, e_max"]
+    HC --> BF["Brute force<br/>exhaustive 2^n enumeration"]
+    HC --> GR["Greedy<br/>n_shots seeded restarts"]
+    HC --> GW["Goemans-Williamson<br/>1 SDP + n_shots roundings"]
+    HC --> QA["QAOA (p = 1..6)<br/>COBYLA on Nexus Helios"]
+    BF --> EN["Per-sample energies &langle;H_C&rangle;"]
+    GR --> EN
+    GW --> EN
+    QA --> EN
+    BASE --> AR["approximation_ratio<br/>r = (e_max - E) / (e_max - e_min)"]
+    EN --> AR
+    AR --> CMP["Comparable score in [0, 1]<br/>1 = classical optimum"]

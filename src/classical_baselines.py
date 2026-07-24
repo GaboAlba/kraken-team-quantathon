@@ -48,7 +48,7 @@ def brute_force_maxcut(G: nx.Graph) -> Tuple[Partition, float]:
     n = len(nodes)
     if n > 22:
         raise ValueError(
-            f"Fuerza bruta no es práctica para {n} nodos (2^{n} particiones)."
+            f"Brute force is impractical for {n} nodes (2^{n} partitions)."
         )
 
     best_partition: Partition = {}
@@ -123,9 +123,9 @@ def goemans_williamson(
     problem.solve(solver=cp.SCS)
 
     if problem.status not in {cp.OPTIMAL, cp.OPTIMAL_INACCURATE}:
-        raise RuntimeError(f"La solución SDP no es óptima: estado={problem.status}.")
+        raise RuntimeError(f"SDP solution is not optimal: status={problem.status}.")
     if X.value is None:
-        raise RuntimeError("La solución SDP no se obtuvo correctamente.")
+        raise RuntimeError("SDP solution could not be obtained.")
 
     X_val = np.asarray(X.value, dtype=float)
     eigvals, eigvecs = np.linalg.eigh(X_val)
@@ -156,10 +156,10 @@ if __name__ == "__main__":
     G = load_project_graph()
 
     bf_partition, bf_value = brute_force_maxcut(G)
-    print(f"Fuerza bruta (óptimo):      corte = {bf_value:.3f}")
+    print(f"Brute force (optimum):      cut = {bf_value:.3f}")
 
     gr_partition, gr_value = greedy_maxcut(G, seed=0)
-    print(f"Greedy:                     corte = {gr_value:.3f}")
+    print(f"Greedy:                     cut = {gr_value:.3f}")
 
     gw_partition, gw_value = goemans_williamson(G, n_rounding_trials=50, seed=42)
-    print(f"Goemans-Williamson:         corte = {gw_value:.3f}")
+    print(f"Goemans-Williamson:         cut = {gw_value:.3f}")

@@ -4,6 +4,7 @@
 
 * Gabriel Alba Romero
 * Juan C Lara
+* Jonathan David Gómez Barrios
 
 ## Challenge
 We are solving Challenge #1

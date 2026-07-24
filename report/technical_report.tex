@@ -51,7 +51,7 @@
 
 \title{\vspace{-1.2cm}\textbf{Quantum Fault-Zone Partitioning of the Costa Rican
 Power Grid}\\[2pt]\large A Max-Cut / QAOA Study --- Quantathon Challenge \#1}
-\author{Kraken Team --- Gabriel Alba Romero, Juan C.\ Lara}
+\author{Kraken Team --- Gabriel Alba Romero, Juan C.\ Lara, Jonathan Gomez Barrios}
 \date{\today}
 
 \begin{document}
@@ -268,15 +268,6 @@ turn each energy into a comparable approximation ratio.}
 \label{fig:optimizers}
 \end{figure}
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.95\textwidth]{qubo_maxcut.png}
-\caption{The QUBO for the Guanacaste-North sub-grid: the symmetrized $Q$ matrix
-(left) and the exact brute-force optimal fault-zone partition (right), with the
-protected zone boundary drawn as dashed cut lines.}
-\label{fig:qubo-maxcut}
-\end{figure}
-
 % ===========================================================================
 \section{Quantum implementation}
 % ===========================================================================
@@ -315,36 +306,20 @@ because Guppy cannot type-infer an empty \texttt{comptime} list.
 H_C\rangle$ from \texttt{CostHamiltonian.energy} weighted by shot
 probabilities. \textbf{SciPy COBYLA} minimizes it over the flattened
 $[\gamma(p),\beta(p)]$ parameters; a fixed seed makes every emulator evaluation
-deterministic (Fig.~\ref{fig:qaoa}). The kernel is backend-agnostic: it compiles
+deterministic. The kernel is backend-agnostic: it compiles
 to HUGR and runs on local Selene (\texttt{main.emulator(...).run()}) or Nexus
 (\texttt{upload}$\to$\texttt{start\_execute\_job}$\to$\texttt{wait\_for}), which
 return the \emph{same} \texttt{QsysResult} type, so decoding is identical. For
 $n\le12$ the exact ground state (\texttt{brute\_force\_ground\_state}) and
 spectrum bounds provide the reference for the approximation ratio.
 
-\begin{figure}[t]
-\centering
-\begin{tikzpicture}[node distance=5mm and 9mm]
-  \node[quant] (hc) {$H_C$ (\texttt{qubo\_cr.json})};
-  \node[quant,right=of hc] (bi) {build\_qaoa\_instance\\weighted Guppy kernel};
-  \node[proc,right=of bi] (init) {initial $\gamma[p],\beta[p]$\\(seeded RNG)};
-  \node[quant,below=7mm of init] (comp) {compile kernel\\for $(\gamma,\beta)$};
-  \node[quant,left=of comp] (run) {run $n_{\text{shots}}$\\Selene / Nexus};
-  \node[proc,left=of run] (en) {energy\_from\_result\\$\to\langle H_C\rangle$};
-  \node[dec,below=7mm of en] (conv) {COBYLA\\done?};
-  \node[proc,right=14mm of conv] (new) {COBYLA proposes\\new $(\gamma,\beta)$};
-  \node[data,below=6mm of conv] (out) {best angles $+$ counts\\partition, approx.\ ratio};
-  \draw[fl](hc)--(bi);\draw[fl](bi)--(init);\draw[fl](init)--(comp);
-  \draw[fl](comp)--(run);\draw[fl](run)--(en);\draw[fl](en)--(conv);
-  \draw[fl](conv)-- node[lbl,above]{no} (new);
-  \draw[fl](new)|-(comp);
-  \draw[fl](conv)-- node[lbl,right]{yes} (out);
-\end{tikzpicture}
-\caption{QAOA variational loop. COBYLA drives the $(\gamma,\beta)$ search;
-each evaluation compiles the weighted kernel, samples the emulator, and decodes
-$\langle H_C\rangle$.}
-\label{fig:qaoa}
-\end{figure}
+% ===========================================================================
+\section{Results}
+% ===========================================================================
+
+Initially, a small smoke test was run to ensure that with a small graph we would have a solution that makes sense. The result from this small run was the graph detailed in Figure 5 \ref{fig:qaoa-partition}, which for this small dataset is the best cut possible. This signal indicates that the QAOA optimizer implemented can find good solutions to these types of issues. 
+
+The real question then becomes if it can generate them reliably?
 
 \begin{figure}[t]
 \centering
@@ -355,15 +330,14 @@ lines dashed.}
 \label{fig:qaoa-partition}
 \end{figure}
 
-% ===========================================================================
-\section{Results}
-% ===========================================================================
-
 % ---------------------------------------------------------------------------
 % RESULTS TABLE -- pre-populated from experiments/results/
 %   evaluation_20260724_072452.json (Guanacaste North, n=9, 3 replicate runs,
 %   1000 shots, COBYLA maxiter=40). Update numbers if you re-run the benchmark.
 % ---------------------------------------------------------------------------
+
+To understand if the optimizer can generate repeatable results a statistical analysis over several runs was run. At the same time, we ran the 3 classical benchmarks to be able to compare QAOA to standard optimization practices. 
+
 \begin{table}[h]
 \centering
 \small
@@ -383,6 +357,8 @@ QAOA $p=3$          & $5.15\pm0.26$ & $0.733\pm0.075$ & $0.989\pm0.016$ & $29.4\
 \bottomrule
 \end{tabular}
 \end{table}
+
+The Table \ref{tab:results} results are expected, for the parameters chosen GW and the greedy algorithm show far superior performance both in terms of time and in terms of the approximation ratio. From the literature we know that the expected `r` is around 0.6 so the performance achieved is on par with the results achieved by other implementations in the field.
 
 \paragraph{Reading the table.} The exact optimum ($e_{\min}=4.96$) is reached
 by both classical baselines and, in its best shot, by QAOA (best
@@ -414,7 +390,6 @@ range, whiskers, green triangle = mean); $1.0$ is the classical optimum.}
 \label{fig:res-box}
 \end{subfigure}
 
-\medskip
 \begin{subfigure}[t]{0.49\textwidth}
 \centering
 \includegraphics[width=\textwidth]{distribution.png}
@@ -435,17 +410,15 @@ distributions.}
 \label{fig:results}
 \end{figure}
 
-\paragraph{Analysis.}
-% ---------------------------------------------------------------------------
-% PLACEHOLDER -- results analysis prose (to be written).
-% Discuss: approximation-ratio trend vs p, effect of shots, convergence
-% behaviour, classical vs quantum gap, and what the chosen partition means
-% physically (which tie-lines are cut, generation balance across zones).
-% ---------------------------------------------------------------------------
-\emph{[PLACEHOLDER --- add your analysis of the figures above: the
-approximation-ratio trend with circuit depth $p$, convergence behaviour, the
-classical/quantum gap, and the physical interpretation of the chosen
-partition.]}
+Both Figure \ref{fig:res-box} and Figure \ref{fig:res-dist} show a lot of different aspects of the results achieved. In the first place we can observe the dramatic difference in the distribution of results. As seen, both QAOA algorithms have a very broad distribution which indicates that the results from this algorithm are not as consistent as the classical algorithms. This is most likely due to noise in the model. 
+
+Additionally, it is also notable that both the median and the mean of the distribution for QAOA is lower than for the classical algorithms. This is expected for such a small graph, since greedy can easily optimize this size of a dataset. The expectation would be for the greedy algorithm to quickly fall off as the problem gets bigger. 
+
+Finally, in terms of the convergence of the algorithm Figure \ref{fig:res-conv} shows how the approximation ratio behaved as the optimization iterations were running. In this graph it is easy to see that when p = 3, the mean of the results definitely sits higher than when p = 1, confirming the expected behavior that with more layers, it is able to find better solutions. Even then, the standard deviation is larger for the 3 layer solution indicating that the introduction of more layers also adds more noise to the solution. What this means is that there is most likely a divergence point where noise takes over and the standard deviation becomes unacceptably large.
+
+\section{Conclusions}
+
+From the development of this project it can be concluded that the QAOA optimizer can solve max-cut problems with an approximation ratio close to 0.6, which is lower than the baseline classical algorithms for these same type of problems. What this indicates is that the technology is still very immature and there is still a lot of room to grow to catch up and eventually surpass the classical baselines. 
 
 % ===========================================================================
 \section{Honest limitations}
@@ -464,5 +437,17 @@ partition.]}
 %   * Optimizer: COBYLA local minima, limited maxiter, fixed seed.
 % ---------------------------------------------------------------------------
 During the execution of the hackathon there were a few limitations that were found. In the first place, from our baseline case of 9 nodes to the max possible 26 qubits QAOA scales in a very steep fashion, making it unfeasible to be able to run as many evaluations as we wanted. Additionally, the speed of the emulators was a huge bottleneck when trying to run optimizations since a single cycle was needed for every optimization iteration, which meant we had to end up defaulting to using Selene local emulation instead of Nexus' backends. There is a small caveat here, where our web-app does run in the Nexus backend. Likewise, we also faced a big limitation in terms of time. Since none of the team members had any physics or quantum computing background, most of the first day had to be spent in gaining a better understanding of the QAOA optimizer and what the problem was at it's core, which in the end meant less time for running evaluations.
+
+\section {Future Work}
+
+To further develop this solution more things can be done. These are some of the possible paths that may be taken to achieve even better results:
+\begin{enumerate}
+    \item The weight calculation for th transmission lines should be fine-tuned to better represent the importance of a line
+    \item The penalty coefficients in the QUBO calculation must also be fine tuned further to be able to get better approximation ratios.
+    \item The implementation of a weighted AND directed QUBO representation may provide even beter solutions since it may be able to take into account transmission lines direction into the weight calculation.
+    \item Use different variations of the QAOA optimizer is also worth exploring such as warm-start or recursive QAOA may present better performance.
+    \item Noise reduction algorithms could also increase the performance of the optimizer
+    \item Error Correction or Error Detection algorithms may also help in achieving a better performance with the tradeoff of considerably longer running times for the algorithm.
+\end{enumerate}
 
 \end{document}
